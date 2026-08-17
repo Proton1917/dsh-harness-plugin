@@ -1,0 +1,16 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: daily
+      timezone: America/Los_Angeles
+    allow:
+      - dependency-name: '@deepseek-ai/*'
+    groups:
+      deepseek-harness-release:
+        patterns:
+          - '@deepseek-ai/*'
+    versioning-strategy: increase
+    open-pull-requests-limit: 2
