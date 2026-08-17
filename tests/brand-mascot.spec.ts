@@ -29,7 +29,7 @@ describe('web brand mascot client plugin', () => {
     expect(document.querySelector('[data-dsh-brand-mascot-style]')?.textContent)
       .toContain('mascot.webp')
     expect(document.querySelector('[data-dsh-brand-mascot-style]')?.textContent)
-      .toContain('height: 104px')
+      .toContain('height: 324px')
 
     for (const dispose of effects.reverse()) dispose()
 
@@ -59,9 +59,11 @@ describe('web brand mascot client plugin', () => {
     expect(styles).toContain('@media (prefers-reduced-motion: reduce)')
     expect(styles).toContain('body[data-ds-dark-theme]')
     expect(styles).toContain('button[data-dsh-brand-mascot]::before')
+    expect(styles).toContain('background-position: center, center')
     expect(styles).toContain('z-index: 2')
     expect(styles).not.toContain("content: 'HARNESS'")
     expect(styles).not.toContain('clip-path:')
+    expect(styles).not.toContain('transform: scale')
 
     for (const dispose of effects.reverse()) dispose()
   })

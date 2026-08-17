@@ -19,13 +19,13 @@ button[${BRAND_ATTRIBUTE}] {
   justify-content: center;
   gap: 0;
   min-width: 0;
-  height: 104px;
-  min-height: 104px;
-  padding: 0 12px 12px;
+  height: 324px;
+  min-height: 324px;
+  padding: 0 12px 16px;
   box-sizing: border-box;
   overflow: hidden !important;
   border: 1px solid rgba(111, 143, 220, 0.72);
-  border-radius: 20px;
+  border-radius: 24px;
   color: rgba(249, 251, 255, 0.98) !important;
   background: transparent !important;
   box-shadow:
@@ -41,7 +41,7 @@ button[${BRAND_ATTRIBUTE}] {
 }
 
 div:has(> button[${BRAND_ATTRIBUTE}]) {
-  height: 120px;
+  height: 340px;
 }
 
 button[${BRAND_ATTRIBUTE}] > ${BRAND_WORDMARK_SELECTOR} {
@@ -68,10 +68,9 @@ button[${BRAND_ATTRIBUTE}]::before {
   background-image:
     radial-gradient(circle at 76% 10%, rgba(255, 255, 255, 0.38), transparent 34%),
     url("${imageUrl}");
-  background-position: center, center 31%;
+  background-position: center, center;
   background-repeat: no-repeat;
   background-size: cover, cover;
-  transform: scale(1.02);
 }
 
 button[${BRAND_ATTRIBUTE}]::after {
