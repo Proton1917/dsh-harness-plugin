@@ -58,7 +58,6 @@ body[data-ds-dark-theme] > [${BACKDROP_ATTRIBUTE}] {
 
 [${BACKDROP_ATTRIBUTE}] > [${LAYER_ATTRIBUTE}] {
   position: absolute;
-  inset: 0;
   pointer-events: none;
 }
 
@@ -74,6 +73,8 @@ body[data-ds-dark-theme] > [${BACKDROP_ATTRIBUTE}] {
 }
 
 [${LAYER_ATTRIBUTE}='portrait'] {
+  top: 0;
+  bottom: 0;
   left: var(--dsh-background-conversation-left, 0px);
   right: auto;
   width: var(--dsh-background-conversation-width, 100vw);
@@ -86,6 +87,7 @@ body[data-ds-dark-theme] > [${BACKDROP_ATTRIBUTE}] {
 }
 
 [${LAYER_ATTRIBUTE}='scrim'] {
+  inset: 0;
   background:
     linear-gradient(90deg, rgba(237, 244, 255, 0.54) 0%, rgba(237, 244, 255, 0.10) 48%, rgba(231, 239, 251, 0.34) 100%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(220, 230, 247, 0.26) 100%);
