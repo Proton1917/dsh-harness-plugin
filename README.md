@@ -13,7 +13,7 @@
 ## 安装到 Harness profile
 
 ```sh
-dsh plugin --profile web add link:/Users/gordongauerk/Projects/dsh-harness-plugin
+dsh plugin --profile web add .
 ```
 
 `dsh.bundle.patch` 只插入一个 `harness-plugin` 条目。当前 Client 功能在 Web profile 呈现，Host projection 与整个 Harness session 日志协同。正常运行：
@@ -35,3 +35,11 @@ pnpm pack --dry-run
 ## 兼容性边界
 
 官方侧栏当前没有品牌子插槽，因此品牌模块以 `BrandWordmark` 的原生 SVG `viewBox="0 0 182 24"` 作为挂载点。Harness 更新不会覆盖本仓库；如果上游彻底替换这枚字标，角色卡会安全地不显示，需要同步更新识别特征。
+
+## 许可证与公开分发
+
+仓库源码采用 [BSD-3-Clause](LICENSE)。`package.json` 保留 `"private": true`，仅用于阻止意外发布到 npm registry，不限制 GitHub 上的源码使用和再分发。
+
+`src/assets/background.webp` 和 `src/assets/mascot.webp` 是仓库所有者授权随本仓库公开发布的图片衍生文件，并按 BSD-3-Clause 分发；该授权不授予任何第三方商标、角色或原始作品中超出仓库所有者控制范围的权利。详见 [ASSET_NOTICE.md](ASSET_NOTICE.md)。
+
+`assets/deepseek-v3/` 中 tokenizer 的来源、校验和与随附 MIT 许可证见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
