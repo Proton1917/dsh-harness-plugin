@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MedicalLauncher } from '../src/client/MedicalLauncher.tsx'
 import { MedicalSettingsRow } from '../src/client/MedicalSettingsRow.tsx'
 import { MEDICAL_LOCALE_NAMESPACE, zh } from '../src/client/locales.ts'
+import { waitForMedicalSettings } from '../src/client/settings.ts'
 import type { MedicalSettings } from '../src/types.ts'
 
 afterEach(cleanup)
@@ -44,6 +45,30 @@ function settingsScope(enabled: boolean): SettingsScope<MedicalSettings> {
 }
 
 describe('medical settings and case desk', () => {
+  it('waits for a delayed Host settings snapshot used by Medical-mode selection', async () => {
+    let snapshot: SettingsScopeSnapshot<MedicalSettings> = {
+      status: 'loading', value: undefined, base: undefined, user: undefined,
+      revision: 0, writable: false, mode: 'host',
+    }
+    const listeners = new Set<() => void>()
+    const scope = {
+      getSnapshot: () => snapshot,
+      subscribe: (listener: () => void) => {
+        listeners.add(listener)
+        return () => { listeners.delete(listener) }
+      },
+      set: async () => {},
+      unset: async () => {},
+    } as SettingsScope<MedicalSettings>
+    const waiting = waitForMedicalSettings(scope)
+    snapshot = settingsScope(true).getSnapshot()
+    for (const listener of listeners) listener()
+    await expect(waiting).resolves.toMatchObject({
+      enabled: true, provider: 'cc-api', model: 'claude-fable-5', reasoningEffort: 'high',
+    })
+    expect(listeners.size).toBe(0)
+  })
+
   it('renders the exact route and persists the enable switch', async () => {
     const setEnabled = vi.fn(async () => {})
     render(<MedicalSettingsRow settings={settingsScope(false)} setEnabled={setEnabled} t={t} />)

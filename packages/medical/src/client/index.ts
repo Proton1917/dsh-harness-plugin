@@ -9,6 +9,7 @@ import { medicalModelSelection, MedicalClientController, type MedicalClientConte
 import { MedicalLauncher } from './MedicalLauncher.tsx'
 import { MedicalSettingsRow } from './MedicalSettingsRow.tsx'
 import { en, MEDICAL_LOCALE_NAMESPACE, zh } from './locales.ts'
+import { waitForMedicalSettings } from './settings.ts'
 import { installMedicalStyles } from './styles.ts'
 
 export {
@@ -17,6 +18,7 @@ export {
 } from './controller.ts'
 export { MedicalLauncher } from './MedicalLauncher.tsx'
 export { MedicalSettingsRow } from './MedicalSettingsRow.tsx'
+export { waitForMedicalSettings } from './settings.ts'
 export { MEDICAL_STYLES } from './styles.ts'
 
 /** Client services required by the medical settings and launcher surfaces. */
@@ -54,10 +56,8 @@ export function apply(ctx: ClientContext): void {
   }, MedicalSettingsRow))
   ctx.effect(() => ctx.remote.$on('agent-preset/selected', (sessionId, agentPreset) => {
     if (agentPreset !== 'medical') return
-    const value = settings.getSnapshot().value
-    if (value === undefined) return
-    void Promise.resolve()
-      .then(() => ctx.modelDirectories.directoryFor(sessionId).select(medicalModelSelection(value)))
+    void waitForMedicalSettings(settings)
+      .then(value => ctx.modelDirectories.directoryFor(sessionId).select(medicalModelSelection(value)))
       .catch(() => { /* ModelDirectory owns the visible selection error. */ })
   }), 'medical: Medical-mode model selection echo')
   ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({
