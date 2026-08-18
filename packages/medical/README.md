@@ -44,7 +44,7 @@ dsh plugin --profile web remove @proton1917/dsh-medical
 ## 医学模式数据流
 
 1. Agent Preset roster 从 `${DSH_HOME:-$HOME/.dsh}/.agent-presets/medical/` 读取 `preset.yml` 和 `agent.cordis.yml`，因此它与标准、PTC、极简、创造模式处于同一个官方菜单。
-2. 用户选择医学模式时，DSH 通过标准 `agent-preset/selected` 事件把选择写入会话日志；插件只对当前解析结果为 `medical` 的 Agent 写入 Fable 请求头。
+2. 用户选择医学模式时，DSH 通过标准 `agent-preset/selected` 事件把选择写入会话日志；插件只对当前解析结果为 `medical` 的 Agent 写入 Fable 请求头，并通过官方 `session.selectModel` 同步客户端模型控件与图片能力门。
 3. Preset 装入完整医学系统提示、抑制运行时编码上下文、限制全部工具，并拒绝同一用户消息产生第二个模型步骤。
 4. 用户消息不做本地重写。提示要求 Fable 自行整理时间线、合并重复信息、并列矛盾描述，并把无法确定的字段列为待补充。
 5. 新鲜医学会话的第一条用户文本触发确定性标题，立即覆盖并取消自动标题工作；不会增加标题模型调用。

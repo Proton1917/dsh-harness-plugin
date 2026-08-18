@@ -33,6 +33,8 @@ export default defineConfig([
         '@deepseek-ai/dsh-client-locale/client',
         '@deepseek-ai/dsh-client-runtime',
         '@deepseek-ai/dsh-client-runtime/client',
+        '@deepseek-ai/dsh-client-ui-model-selection',
+        '@deepseek-ai/dsh-client-ui-model-selection/client',
         '@deepseek-ai/dsh-client-ui-settings',
         '@deepseek-ai/dsh-client-ui-settings/client',
         '@deepseek-ai/dsh-client-ui-sidebar',

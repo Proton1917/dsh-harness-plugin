@@ -1,9 +1,9 @@
 import type {
   ClientContext, ISessions, IWorkspaces, SessionFace, SessionId, WorkspaceId,
 } from '@deepseek-ai/dsh-client-runtime/client'
-import type { ConnectionHandle, PromptContentPart } from '@deepseek-ai/dsh-api-remotes/client'
+import type { ConnectionHandle, ModelSelection, PromptContentPart } from '@deepseek-ai/dsh-api-remotes/client'
 import { medicalSessionTitle, renderMedicalCaseMessage } from '../shared.ts'
-import type { MedicalCaseInput } from '../types.ts'
+import type { MedicalCaseInput, MedicalSettings } from '../types.ts'
 
 /** Browser compiler face for services whose Host and Client names intentionally coincide. */
 export type MedicalClientContext = Omit<ClientContext, 'sessions' | 'workspaces'> & {
@@ -33,6 +33,15 @@ export const MAX_MEDICAL_IMAGES = 8
 
 /** Maximum bytes accepted for one browser image before upload. */
 export const MAX_MEDICAL_IMAGE_BYTES = 10 * 1024 * 1024
+
+/** Project persisted medical settings into the official session model-selection value. */
+export function medicalModelSelection(settings: MedicalSettings): ModelSelection {
+  return {
+    provider: settings.provider,
+    model: settings.model,
+    reasoningEffort: settings.reasoningEffort as NonNullable<ModelSelection['reasoningEffort']>,
+  }
+}
 
 const MEDICAL_IMAGE_MEDIA_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'] as const
 type MedicalImageMediaType = typeof MEDICAL_IMAGE_MEDIA_TYPES[number]

@@ -1,7 +1,7 @@
 import type { SessionFace, SessionId, WorkspaceId } from '@deepseek-ai/dsh-client-runtime/client'
 import { describe, expect, it, vi } from 'vitest'
 import {
-  createMedicalSubmitter, medicalCommandLine, medicalPromptContent,
+  createMedicalSubmitter, medicalCommandLine, medicalModelSelection, medicalPromptContent,
 } from '../src/client/controller.ts'
 import type { MedicalCaseInput } from '../src/types.ts'
 
@@ -21,6 +21,16 @@ const input: MedicalCaseInput = {
 }
 
 describe('medical Client submission', () => {
+  it('projects the persisted route into the official model-selection value', () => {
+    expect(medicalModelSelection({
+      enabled: true,
+      provider: 'cc-api',
+      model: 'claude-fable-5',
+      reasoningEffort: 'high',
+      armTimeoutMs: 30_000,
+    })).toEqual({ provider: 'cc-api', model: 'claude-fable-5', reasoningEffort: 'high' })
+  })
+
   it('creates, titles, opens, arms, and prompts one fresh session in order', async () => {
     const order: string[] = []
     const createSession = vi.fn(async () => { order.push('create') })
