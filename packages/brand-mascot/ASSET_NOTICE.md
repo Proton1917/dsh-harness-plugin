@@ -1,3 +1,5 @@
 # Asset notice
 
-`src/assets/mascot.webp` is a size-optimized derivative of an image supplied directly by the user for their DeepSeek Harness customization. This package does not assert redistribution rights for the image. Keep it private unless the image owner has granted publication rights.
+`src/assets/mascot.webp` is a size-optimized derivative of an image supplied directly by the repository owner for DeepSeek Harness customization.
+
+The repository owner authorizes public use, modification, and redistribution of this derivative file under the repository's BSD-3-Clause license. This authorization applies only to rights controlled by the repository owner and does not grant rights in third-party trademarks, characters, logos, or source works.

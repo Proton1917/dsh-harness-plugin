@@ -1,7 +1,7 @@
 {
   "name": "@proton1917/dsh-harness-plugins-workspace",
   "version": "0.1.0",
-  "description": "Private workspace for independently installable DeepSeek Harness plugins",
+  "description": "Workspace for independently installable DeepSeek Harness plugins",
   "private": true,
   "type": "module",
   "scripts": {

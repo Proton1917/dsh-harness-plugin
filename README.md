@@ -1,6 +1,6 @@
 # DSH Harness Plugins
 
-这个私有仓库包含四个可独立安装、启用、关闭和升级的 DeepSeek Harness 插件。根目录是 pnpm workspace，不是 DSH 插件；每个 `packages/*` 子目录都是一个完整 npm 包，并通过自己的 Bundle patch 向 Profile 插入一个 Cordis 插件条目。
+这个开源仓库包含四个可独立安装、启用、关闭和升级的 DeepSeek Harness 插件。根目录是 pnpm workspace，不是 DSH 插件；每个 `packages/*` 子目录都是一个完整 npm 包，并通过自己的 Bundle patch 向 Profile 插入一个 Cordis 插件条目。
 
 ## 插件目录
 
@@ -24,14 +24,14 @@ dsh plugin --profile web remove @proton1917/dsh-harness-plugin
 再分别安装四个子包，并同步医学 Agent Preset：
 
 ```sh
-dsh plugin --profile web add /Users/gordongauerk/Projects/dsh-harness-plugin/packages/live-stats
-dsh plugin --profile web add /Users/gordongauerk/Projects/dsh-harness-plugin/packages/web-background
-dsh plugin --profile web add /Users/gordongauerk/Projects/dsh-harness-plugin/packages/brand-mascot
-dsh plugin --profile web add /Users/gordongauerk/Projects/dsh-harness-plugin/packages/medical
+dsh plugin --profile web add ./packages/live-stats
+dsh plugin --profile web add ./packages/web-background
+dsh plugin --profile web add ./packages/brand-mascot
+dsh plugin --profile web add ./packages/medical
 pnpm run medical:preset:install
 ```
 
-根目录 `/Users/gordongauerk/Projects/dsh-harness-plugin` 不声明 `dsh.bundle`，不能作为额外插件安装。安装后用以下命令验证四个独立配置层和条目：
+仓库根目录不声明 `dsh.bundle`，不能作为额外插件安装。安装后用以下命令验证四个独立配置层和条目：
 
 ```sh
 dsh --profile web --dump-config
@@ -78,4 +78,8 @@ git diff --check
 
 ## 资源边界
 
-`packages/web-background/src/assets/background.webp` 和 `packages/brand-mascot/src/assets/mascot.webp` 来自用户提供的图片，仓库保持私有。`packages/live-stats/assets/deepseek-v3/` 保存实时估算所需的 DeepSeek tokenizer；来源与校验信息见各包通知文件及根目录通知文件。
+仓库源码采用 [BSD-3-Clause](LICENSE)。各 npm package 保留 `"private": true`，仅用于阻止意外发布到 npm registry，不限制 GitHub 上的源码使用和再分发。
+
+`packages/web-background/src/assets/background.webp` 和 `packages/brand-mascot/src/assets/mascot.webp` 是仓库所有者授权随本仓库公开发布的图片衍生文件，并按 BSD-3-Clause 分发；该授权不授予任何第三方商标、角色或原始作品中超出仓库所有者控制范围的权利。详见 [ASSET_NOTICE.md](ASSET_NOTICE.md) 和各包的通知文件。
+
+`packages/live-stats/assets/deepseek-v3/` 保存实时估算所需的 DeepSeek tokenizer；其来源、校验和与随附 MIT 许可证见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

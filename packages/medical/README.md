@@ -7,7 +7,7 @@
 先把插件包安装到 Web Profile，再把随包维护的第五模式同步到 DSH 的用户 Agent Preset 目录：
 
 ```sh
-dsh plugin --profile web add /Users/gordongauerk/Projects/dsh-harness-plugin/packages/medical
+dsh plugin --profile web add ./packages/medical
 pnpm run medical:preset:install
 ```
 

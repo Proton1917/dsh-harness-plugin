@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This private repository owns the user's independently installable DeepSeek Harness plugins. It is a pnpm workspace installed into local profiles by linking individual `packages/*` directories and remains separate from the upstream Harness fork.
+This open-source repository owns independently installable DeepSeek Harness plugins. It is a pnpm workspace installed into local profiles by linking individual `packages/*` directories and remains separate from the upstream Harness fork.
 
 ## Repository scope
 
@@ -9,7 +9,7 @@ This private repository owns the user's independently installable DeepSeek Harne
 - Keep the four packages independent. Do not import source files or mutable runtime state across package directories; shared behavior must first justify a separate shared package rather than an implicit coupling.
 - Future capabilities belong in new packages under this repository, not inside an unrelated current package. Update this file, the root README, workspace configuration, and Profile installation procedure in the same change.
 - Do not copy these packages, their images, or their source into `~/deepseek-harness/packages/`. Upstream Harness updates must remain independent of this repository.
-- Keep the repository private unless redistribution rights for both user-supplied images are confirmed. Follow the root and package-level asset notices.
+- Public redistribution of both repository-owned image derivatives is authorized under BSD-3-Clause. Preserve the root and package-level asset notices and do not imply rights in third-party trademarks, characters, or source works beyond that authorization.
 
 ## Package ownership
 
