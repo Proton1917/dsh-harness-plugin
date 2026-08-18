@@ -7,7 +7,6 @@ import type {} from '@deepseek-ai/dsh-system-prompt'
 import type {} from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-session-title'
 import { isMedicalMode, MedicalModeCoordinator } from './mode.ts'
-import { medicalSessionTitle } from './shared.ts'
 import { createMedicalCommand, MedicalTurnCoordinator } from './turn.ts'
 import type { MedicalSettings } from './types.ts'
 
@@ -71,26 +70,19 @@ export function apply(ctx: Context, config: Config = DEFAULT_MEDICAL_SETTINGS): 
   )
 
   const coordinator = new MedicalTurnCoordinator(() => currentSettings())
-  const medicalMode = new MedicalModeCoordinator(() => currentSettings())
+  const medicalMode = new MedicalModeCoordinator(() => currentSettings(), ctx.sessionTitle)
   ctx.commands.register(createMedicalCommand(() => currentSettings(), coordinator))
   ctx.on('agent/request', ({ agent }, next) => coordinator.routeRequest(agent, next))
   ctx.on('agent/request', ({ agent }, next) => medicalMode.routeRequest(agent, next))
-  ctx.on('agent/pre-step', ({ agent, step }, next) => coordinator.preStep(agent, step, next))
+  ctx.on('agent/pre-step', ({ agent, step, messages }, next) => {
+    if (step === 1) medicalMode.prepareStep(agent, messages)
+    return coordinator.preStep(agent, step, next)
+  })
   ctx.on('agent/status', ({ agent, status }) => { coordinator.status(agent, status) })
   ctx.on('agent/created', ({ agent }) => { medicalMode.sync(agent) })
   ctx.on('agent-preset/selected', (sessionId) => {
     const agent = ctx.agents.get(sessionId)
     if (agent !== undefined) medicalMode.sync(agent)
-  })
-  ctx.on('session/event', (session, event) => {
-    if (event.type !== 'user/message' || event.data.source.kind !== 'user') return
-    const agent = ctx.agents.get(session.id)
-    if (agent === undefined || !isMedicalMode(agent) || ctx.sessionTitle.get(session) !== undefined) return
-    const text = event.data.content
-      .filter((block): block is Extract<(typeof event.data.content)[number], { type: 'text' }> => block.type === 'text')
-      .map(block => block.text)
-      .join(' ')
-    ctx.sessionTitle.rename(session, medicalSessionTitle(text))
   })
   ctx.on('agent/disposed', ({ agent }) => {
     coordinator.disposeAgent(agent)

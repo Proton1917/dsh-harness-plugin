@@ -1,5 +1,5 @@
 import type { Agent } from '@deepseek-ai/dsh-agent'
-import type { LlmCallConfig } from '@deepseek-ai/dsh-llm'
+import type { LlmCallConfig, Message } from '@deepseek-ai/dsh-llm'
 import { describe, expect, it, vi } from 'vitest'
 import { MedicalModeCoordinator } from '../src/mode.ts'
 import type { MedicalSettings } from '../src/types.ts'
@@ -42,6 +42,26 @@ function modeAgent(id: string): ModeHarness {
 }
 
 describe('Medical Agent Preset routing', () => {
+  it('pins the Fable header and deterministic title before the first step enters the log', () => {
+    const harness = modeAgent('medical')
+    const rename = vi.fn()
+    const coordinator = new MedicalModeCoordinator(() => settings, {
+      get: vi.fn(() => undefined),
+      rename,
+    })
+    coordinator.prepareStep(harness.agent, [{
+      role: 'user',
+      content: [{ type: 'text', text: '  咳嗽   3 天  ' }],
+      source: { kind: 'user', rpcId: 'request-1' },
+      id: 'message-1',
+    } as Message])
+    expect(harness.append).toHaveBeenCalledWith('request/header', {
+      header: { config: expect.objectContaining({ provider: 'cc-api', model: 'claude-fable-5' }) },
+      reason: 'initial',
+    })
+    expect(rename).toHaveBeenCalledWith(harness.agent.session, '医学病例 · 咳嗽 3 天')
+  })
+
   it('pins the header and every request to Fable without an inherited token cap', async () => {
     const harness = modeAgent('medical')
     const coordinator = new MedicalModeCoordinator(() => settings)

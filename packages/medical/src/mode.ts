@@ -1,6 +1,8 @@
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import { resolveSessionPreset } from '@deepseek-ai/dsh-agent-presets'
-import { ReasoningEffortId, type LlmCallConfig } from '@deepseek-ai/dsh-llm'
+import { ReasoningEffortId, type LlmCallConfig, type Message } from '@deepseek-ai/dsh-llm'
+import type { SessionTitleService } from '@deepseek-ai/dsh-session-title'
+import { medicalSessionTitle } from './shared.ts'
 import type { MedicalSettings } from './types.ts'
 
 /** Stable id of the direct-submission Agent Preset. */
@@ -31,7 +33,25 @@ export class MedicalModeCoordinator {
   private readonly original = new Map<Agent, LlmCallConfig | undefined>()
 
   /** @param currentSettings - latest persisted medical settings. */
-  constructor(private readonly currentSettings: () => MedicalSettings) {}
+  constructor(
+    private readonly currentSettings: () => MedicalSettings,
+    private readonly titles?: Pick<SessionTitleService, 'get' | 'rename'>,
+  ) {}
+
+  /** Pin the route and deterministic title before a Medical-mode step enters the log. */
+  prepareStep(agent: Agent, messages: readonly Message[]): void {
+    if (!isMedicalMode(agent)) return
+    this.sync(agent)
+    if (this.titles === undefined || this.titles.get(agent.session)?.source.kind === 'user') return
+    const text: string[] = []
+    for (const message of messages) {
+      if (message.role !== 'user' || message.source.kind !== 'user') continue
+      for (const block of message.content) {
+        if (block.type === 'text') text.push(block.text)
+      }
+    }
+    this.titles.rename(agent.session, medicalSessionTitle(text.join(' ')))
+  }
 
   /** Apply or withdraw the durable request header after preset composition changes. */
   sync(agent: Agent): void {
