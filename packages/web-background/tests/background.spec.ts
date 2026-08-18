@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { BACKGROUND_TOKENS, backgroundStyles, installBackground } from '../src/client/background.ts'
+import { apply, BACKGROUND_TOKENS, backgroundStyles } from '../src/client/index.ts'
 
 describe('web background client plugin', () => {
   afterEach(() => {
@@ -27,10 +27,10 @@ describe('web background client plugin', () => {
       },
     } as unknown as ClientContext
 
-    installBackground(ctx)
+    apply(ctx)
 
     expect(overrideTokens).toHaveBeenCalledWith(
-      '@proton1917/dsh-harness-plugin',
+      '@proton1917/dsh-web-background',
       BACKGROUND_TOKENS,
     )
     expect(document.querySelectorAll('[data-dsh-web-background]')).toHaveLength(1)

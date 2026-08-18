@@ -1,6 +1,6 @@
 import { defineConfig } from 'tsdown'
 
-const CLIENT_ID = '@proton1917/dsh-harness-plugin'
+const CLIENT_ID = '@proton1917/dsh-live-stats'
 
 export default defineConfig([
   {
@@ -22,9 +22,6 @@ export default defineConfig([
     clean: false,
     dts: false,
     sourcemap: true,
-    loader: {
-      '.webp': 'dataurl',
-    },
     deps: {
       neverBundle: [
         '@deepseek-ai/cordis',
@@ -33,10 +30,6 @@ export default defineConfig([
         '@deepseek-ai/dsh-client-runtime',
         '@deepseek-ai/dsh-client-runtime/client',
         '@deepseek-ai/dsh-client-ui-conversation',
-        '@deepseek-ai/dsh-client-ui-sidebar',
-        '@deepseek-ai/dsh-client-ui-sidebar/client',
-        '@deepseek-ai/dsh-client-ui-theme',
-        '@deepseek-ai/dsh-client-ui-theme/client',
       ],
     },
     outputOptions: {

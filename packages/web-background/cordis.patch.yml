@@ -1,0 +1,3 @@
+- insert:
+    - id: web-background
+      name: '@proton1917/dsh-web-background'

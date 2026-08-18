@@ -4,6 +4,9 @@ import mascotImage from '../assets/mascot.webp'
 const BRAND_ATTRIBUTE = 'data-dsh-brand-mascot'
 const BRAND_WORDMARK_SELECTOR = 'svg[viewBox="0 0 182 24"]'
 
+/** The mascot surface uses only the Client root lifecycle. */
+export const inject: string[] = []
+
 /**
  * Build the isolated brand-card stylesheet.
  * @param imageUrl - bundled data URL for the user-supplied square portrait.
@@ -161,4 +164,9 @@ export function installBrandMascot(ctx: ClientContext): void {
       style.remove()
     }
   }, 'harness-brand: mascot card')
+}
+
+/** Install the sidebar brand mascot Client plugin. */
+export function apply(ctx: ClientContext): void {
+  installBrandMascot(ctx)
 }

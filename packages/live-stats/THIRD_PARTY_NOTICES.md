@@ -2,7 +2,7 @@
 
 ## DeepSeek V3 tokenizer
 
-The files under `packages/live-stats/assets/deepseek-v3/` were extracted without modification from DeepSeek's official tokenizer archive:
+The files under `assets/deepseek-v3/` were extracted without modification from DeepSeek's official tokenizer archive:
 
 - Source: <https://cdn.deepseek.com/api-docs/deepseek_v3_tokenizer.zip>
 - Archive SHA-256: `c954ca6f6e54281d72d3c27e2430cea7663f81292b39982e2f97890c66c302de`

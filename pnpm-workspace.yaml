@@ -1,3 +1,6 @@
+packages:
+  - 'packages/*'
+
 minimumReleaseAgeExclude:
   # Compatibility testing intentionally follows freshly published DSH releases.
   - '@deepseek-ai/*'

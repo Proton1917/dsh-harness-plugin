@@ -1,0 +1,7 @@
+# DSH Live Stats
+
+独立的 DeepSeek Harness 实时统计插件。Host 端注册可回放的实时 token projection；Web Client 显示轮次、步骤、LLM/工具耗时、TTFT、缓存命中率、累计 token 和流式 TPS。
+
+```sh
+dsh plugin --profile web add link:/Users/gordongauerk/Projects/dsh-harness-plugin/packages/live-stats
+```
