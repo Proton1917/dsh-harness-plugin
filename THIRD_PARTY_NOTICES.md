@@ -9,7 +9,7 @@ The files under `assets/deepseek-v3/` were extracted without modification from D
 - `tokenizer.json` SHA-256: `ecb6f9fc369894346f0511f4074ca75cee5cd5f3b06d02f1ba35fcd39f8e121d`
 - `tokenizer_config.json` SHA-256: `144a6d92b6012baeb4f2ac41d48ed3458e758f977a0fb5caf75ff07698fc844c`
 
-DeepSeek publishes its tokenizer with the DeepSeek-V3 model materials. Review the upstream code and model license terms before redistributing a release:
+DeepSeek publishes the tokenizer as code/complementary material under the MIT License. A verbatim copy is stored beside the tokenizer as `assets/deepseek-v3/LICENSE-CODE`:
 
 - <https://github.com/deepseek-ai/DeepSeek-V3>
 - <https://github.com/deepseek-ai/DeepSeek-V3/blob/main/LICENSE-CODE>
