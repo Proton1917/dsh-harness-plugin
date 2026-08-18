@@ -1,6 +1,6 @@
 # DSH Harness Plugins
 
-这个私有仓库包含三个可独立安装、启用、关闭和升级的 DeepSeek Harness 插件。根目录是 pnpm workspace，不是 DSH 插件；每个 `packages/*` 子目录都是一个完整 npm 包，并通过自己的 Bundle patch 向 Profile 插入一个 Cordis 插件条目。
+这个开源仓库包含三个可独立安装、启用、关闭和升级的 DeepSeek Harness 插件。根目录是 pnpm workspace，不是 DSH 插件；每个 `packages/*` 子目录都是一个完整 npm 包，并通过自己的 Bundle patch 向 Profile 插入一个 Cordis 插件条目。
 
 ## 插件目录
 
@@ -8,7 +8,7 @@
 |---|---|---|---|
 | `packages/live-stats` | `@proton1917/dsh-live-stats` | `live-stats` | Host 实时 token projection，以及 Web 端轮次、耗时、缓存命中、token 和 TPS 展示 |
 | `packages/web-background` | `@proton1917/dsh-web-background` | `web-background` | 蓝天花束背景、对话区对齐和语义玻璃主题 token |
-| `packages/brand-mascot` | `@proton1917/dsh-brand-mascot` | `brand-mascot` | 侧栏完整品牌角色卡和官方 `DeepSeek HARNESS` 字标叠层 |
+| `packages/brand-mascot` | `@proton1917/dsh-brand-mascot` | `brand-mascot` | 侧栏完整品牌角色卡、官方 `DeepSeek HARNESS` 字标叠层和收起态人物缩略标识 |
 
 三个插件不相互导入源码或运行时状态。删除或关闭其中一个插件不会移除另外两个插件的能力。
 
@@ -23,12 +23,12 @@ dsh plugin --profile web remove @proton1917/dsh-harness-plugin
 再分别安装三个子包：
 
 ```sh
-dsh plugin --profile web add /Users/gordongauerk/Projects/dsh-harness-plugin/packages/live-stats
-dsh plugin --profile web add /Users/gordongauerk/Projects/dsh-harness-plugin/packages/web-background
-dsh plugin --profile web add /Users/gordongauerk/Projects/dsh-harness-plugin/packages/brand-mascot
+dsh plugin --profile web add ./packages/live-stats
+dsh plugin --profile web add ./packages/web-background
+dsh plugin --profile web add ./packages/brand-mascot
 ```
 
-根目录 `/Users/gordongauerk/Projects/dsh-harness-plugin` 不再声明 `dsh.bundle`，不能作为第四个插件安装。安装后用以下命令验证三个独立配置层和条目：
+根目录不声明 `dsh.bundle`，不能作为第四个插件安装。安装后用以下命令验证三个独立配置层和条目：
 
 ```sh
 dsh --profile web --dump-config
@@ -56,6 +56,14 @@ git diff --check
 
 用户可见改动还需要在真实 Harness Web 中验证。三个插件同时启用时，应当看到实时统计、背景和品牌角色；逐一移除后，只能撤回对应插件拥有的 DOM、主题 token、projection、字典和插槽注册。
 
-## 资源边界
+## 兼容性边界
 
-`packages/web-background/src/assets/background.webp` 和 `packages/brand-mascot/src/assets/mascot.webp` 来自用户提供的图片，仓库保持私有。`packages/live-stats/assets/deepseek-v3/` 保存实时估算所需的 DeepSeek tokenizer；来源与校验信息见各包通知文件及根目录通知文件。
+官方侧栏当前没有品牌子插槽，因此品牌模块以 `BrandWordmark` 的原生 SVG `viewBox="0 0 182 24"` 和收起态 `FishLogo` 的 `viewBox="0 0 23.16 17.04"` 作为挂载点。Harness 更新不会覆盖本仓库；如果上游替换任一标识，对应处理会安全地不显示，需要同步更新识别特征。
+
+## 许可证与公开分发
+
+仓库源码采用 [BSD-3-Clause](LICENSE)。`package.json` 保留 `"private": true`，仅用于阻止意外发布到 npm registry，不限制 GitHub 上的源码使用和再分发。
+
+`packages/web-background/src/assets/background.webp` 和 `packages/brand-mascot/src/assets/mascot.webp` 是仓库所有者授权随本仓库公开发布的图片衍生文件，并按 BSD-3-Clause 分发；该授权不授予任何第三方商标、角色或原始作品中超出仓库所有者控制范围的权利。详见 [ASSET_NOTICE.md](ASSET_NOTICE.md) 和各包的通知文件。
+
+`packages/live-stats/assets/deepseek-v3/` 中 tokenizer 的来源、校验和与随附 MIT 许可证见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

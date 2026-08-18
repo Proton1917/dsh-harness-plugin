@@ -85,6 +85,7 @@
   "files": [
     "assets/deepseek-v3/tokenizer.json",
     "assets/deepseek-v3/tokenizer_config.json",
+    "assets/deepseek-v3/LICENSE-CODE",
     "cordis.patch.yml",
     "lib/index.js",
     "lib/client.js",

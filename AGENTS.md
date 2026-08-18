@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This private repository owns the user's independently installable DeepSeek Harness plugins. It is a pnpm workspace installed into local profiles by linking individual `packages/*` directories and remains separate from the upstream Harness fork.
+This open-source repository owns independently installable DeepSeek Harness plugins. It is a pnpm workspace installed into local profiles by linking individual `packages/*` directories and remains separate from the upstream Harness fork.
 
 ## Repository scope
 
@@ -9,13 +9,13 @@ This private repository owns the user's independently installable DeepSeek Harne
 - Keep the three packages independent. Do not import source files or mutable runtime state across package directories; shared behavior must first justify a separate shared package rather than an implicit coupling.
 - Future medical capability belongs in a new package under this repository, not inside any of the three current packages. Update this file, the root README, workspace configuration, and Profile installation procedure in the same change.
 - Do not copy these packages, their images, or their source into `~/deepseek-harness/packages/`. Upstream Harness updates must remain independent of this repository.
-- Keep the repository private unless redistribution rights for both user-supplied images are confirmed. Follow the root and package-level asset notices.
+- Public redistribution of both repository-owned image derivatives is authorized under BSD-3-Clause. Preserve the root and package-level asset notices and do not imply rights in third-party trademarks, characters, or source works beyond that authorization.
 
 ## Package ownership
 
 - `packages/live-stats` owns the replayable live token projection, DeepSeek tokenizer, cache/latency/token row, TPS row, locale namespace, and their tests.
 - `packages/web-background` owns `background.webp`, conversation-aligned backdrop DOM, semantic theme-token overrides, and their tests.
-- `packages/brand-mascot` owns `mascot.webp`, official-wordmark detection, mascot-card DOM/CSS treatment, and their tests.
+- `packages/brand-mascot` owns `mascot.webp`, official-wordmark and collapsed-rail fish detection, mascot-card and portrait-mark DOM/CSS treatment, and their tests.
 - Every package exposes `./client` only when it has a browser half. Browser-only packages retain an empty Host `apply()` so the Loader owns their activation and lifecycle.
 - Every package keeps exact dependency and `dsh.client.inject` metadata for the services it actually consumes. Client injection metadata never substitutes for `slots.inject()` when registering into a slot declared by another package.
 
@@ -23,7 +23,7 @@ This private repository owns the user's independently installable DeepSeek Harne
 
 - `packages/web-background/src/assets/background.webp` is the blue-sky flower runtime background. Preserve the full composition and Retina-ready resolution; do not replace it with the brand portrait.
 - The clear background layer is centered and sized from the live `[data-conversation-scroll]` rectangle. Sidebar collapse, expansion, detail panels, and window resizing must update that rectangle.
-- `packages/brand-mascot/src/assets/mascot.webp` is the glasses-character brand portrait. Display the full 2:3 image underneath the complete official `DeepSeek HARNESS` wordmark; do not turn it into a small badge or crop it to the face.
+- `packages/brand-mascot/src/assets/mascot.webp` is the glasses-character brand portrait. In the expanded sidebar, display the full image underneath the complete official `DeepSeek HARNESS` wordmark. In the collapsed rail, reuse the full composition as a 26×34 rounded portrait mark and reveal the official panel toggle on hover; do not crop either treatment to the face.
 - Keep text and input surfaces readable through semantic theme-token overrides and scrims. Preserve light, dark, high-contrast, and reduced-motion behavior.
 - Register DOM, observers, slots, locale dictionaries, projections, and theme overrides through Cordis effects with complete disposal. Registrations into host-owned slots use `ctx.slots.inject()`. HMR must not accumulate duplicate nodes, styles, listeners, or registrations.
 - Live token counts may estimate in-progress usage, but final provider usage replaces the estimate. TPS uses real streamed output deltas and arrival time rather than whole-response averages.
@@ -33,7 +33,7 @@ This private repository owns the user's independently installable DeepSeek Harne
 - The `web` profile mounts `@deepseek-ai/dsh-base`, `@deepseek-ai/dsh-web-app`, and each of the three personal plugin packages exactly once. Inspect `dsh --profile web --dump-config` before changing Profile wiring.
 - Install and remove plugin links with `dsh plugin --profile web add <package-directory>` and `dsh plugin --profile web remove <package-name>`; never hand-edit generated Profile dependencies or bundle arrays.
 - QQ Bot lives in the separate `~/.dsh/profiles/qqbot` profile. Never commit its AppID, AppSecret, generated patch, or other credentials here.
-- Treat upstream selector changes as compatibility work. If the official wordmark or conversation marker changes, update the narrow selector and preserve safe no-op behavior when the target is absent.
+- Treat upstream selector changes as compatibility work. If the official wordmark, collapsed fish, or conversation marker changes, update the narrow selector and preserve safe no-op behavior when the target is absent.
 
 ## Development and delivery
 
