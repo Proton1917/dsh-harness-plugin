@@ -15,7 +15,7 @@ This open-source repository owns independently installable DeepSeek Harness plug
 
 - `packages/live-stats` owns the replayable live token projection, DeepSeek tokenizer, cache/latency/token row, TPS row, locale namespace, and their tests.
 - `packages/web-background` owns `background.webp`, conversation-aligned backdrop DOM, semantic theme-token overrides, and their tests.
-- `packages/brand-mascot` owns `mascot.webp`, official-wordmark detection, mascot-card DOM/CSS treatment, and their tests.
+- `packages/brand-mascot` owns `mascot.webp`, official-wordmark and collapsed-rail fish detection, mascot-card and portrait-mark DOM/CSS treatment, and their tests.
 - `packages/medical` owns medical admission settings, `/medical-analyze`, the one-request structured-case scope, the `medical` Agent Preset source and sync script, persistent Medical-mode routing, case validation and prompt rendering, the sidebar structured-case desk, the General settings row, and their tests.
 - Every package exposes `./client` only when it has a browser half. Browser-only packages retain an empty Host `apply()` so the Loader owns their activation and lifecycle.
 - Every package keeps exact dependency and `dsh.client.inject` metadata for the services it actually consumes. Client injection metadata never substitutes for `slots.inject()` when registering into a slot declared by another package.
@@ -24,7 +24,7 @@ This open-source repository owns independently installable DeepSeek Harness plug
 
 - `packages/web-background/src/assets/background.webp` is the blue-sky flower runtime background. Preserve the full composition and Retina-ready resolution; do not replace it with the brand portrait.
 - The clear background layer is centered and sized from the live `[data-conversation-scroll]` rectangle. Sidebar collapse, expansion, detail panels, and window resizing must update that rectangle.
-- `packages/brand-mascot/src/assets/mascot.webp` is the glasses-character brand portrait. Display the full 2:3 image underneath the complete official `DeepSeek HARNESS` wordmark; do not turn it into a small badge or crop it to the face.
+- `packages/brand-mascot/src/assets/mascot.webp` is the glasses-character brand portrait. In the expanded sidebar, display the full image underneath the complete official `DeepSeek HARNESS` wordmark. In the collapsed rail, reuse the full composition as a 26×34 rounded portrait mark and reveal the official panel toggle on hover; do not crop either treatment to the face.
 - Keep text and input surfaces readable through semantic theme-token overrides and scrims. Preserve light, dark, high-contrast, and reduced-motion behavior.
 - Register DOM, observers, slots, locale dictionaries, projections, and theme overrides through Cordis effects with complete disposal. Registrations into host-owned slots use `ctx.slots.inject()`. HMR must not accumulate duplicate nodes, styles, listeners, or registrations.
 - Live token counts may estimate in-progress usage, but final provider usage replaces the estimate. TPS uses real streamed output deltas and arrival time rather than whole-response averages.
@@ -39,7 +39,7 @@ This open-source repository owns independently installable DeepSeek Harness plug
 - Install and remove plugin links with `dsh plugin --profile web add <package-directory>` and `dsh plugin --profile web remove <package-name>`; never hand-edit generated Profile dependencies or bundle arrays.
 - Install and remove the fifth mode with `pnpm run medical:preset:install` and `pnpm run medical:preset:remove`. The scripts may update or delete only a directory carrying their management marker; an unmanaged same-name preset is never overwritten or removed.
 - QQ Bot lives in the separate `~/.dsh/profiles/qqbot` profile. Never commit its AppID, AppSecret, generated patch, or other credentials here.
-- Treat upstream selector changes as compatibility work. If the official wordmark or conversation marker changes, update the narrow selector and preserve safe no-op behavior when the target is absent.
+- Treat upstream selector changes as compatibility work. If the official wordmark, collapsed fish, or conversation marker changes, update the narrow selector and preserve safe no-op behavior when the target is absent.
 
 ## Development and delivery
 

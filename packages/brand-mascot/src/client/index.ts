@@ -2,15 +2,17 @@ import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import mascotImage from '../assets/mascot.webp'
 
 const BRAND_ATTRIBUTE = 'data-dsh-brand-mascot'
+const RAIL_ATTRIBUTE = 'data-dsh-brand-mascot-rail'
 const BRAND_WORDMARK_SELECTOR = 'svg[viewBox="0 0 182 24"]'
+const RAIL_FISH_SELECTOR = 'svg[viewBox="0 0 23.16 17.04"]'
 
 /** The mascot surface uses only the Client root lifecycle. */
 export const inject: string[] = []
 
 /**
  * Build the isolated brand-card stylesheet.
- * @param imageUrl - bundled data URL for the user-supplied square portrait.
- * @returns CSS that places the official wordmark over the full mascot card.
+ * @param imageUrl - bundled data URL for the user-supplied portrait artwork.
+ * @returns CSS for the expanded brand card and collapsed portrait mark.
  */
 export function brandStyles(imageUrl: string): string {
   return `
@@ -107,6 +109,55 @@ button[${BRAND_ATTRIBUTE}]:focus-visible {
   outline-offset: 2px;
 }
 
+button[${RAIL_ATTRIBUTE}] {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+button[${RAIL_ATTRIBUTE}]::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  top: 1px;
+  left: 5px;
+  width: 26px;
+  height: 34px;
+  box-sizing: border-box;
+  pointer-events: none;
+  border: 1px solid rgba(122, 155, 236, 0.78);
+  border-radius: 7px;
+  background-image:
+    linear-gradient(180deg, rgba(7, 14, 34, 0.02) 48%, rgba(7, 14, 34, 0.38) 100%),
+    url("${imageUrl}");
+  background-position: center, center;
+  background-repeat: no-repeat;
+  background-size: cover, cover;
+  box-shadow:
+    0 0 0 1px rgba(113, 145, 229, 0.10),
+    0 3px 9px rgba(15, 30, 75, 0.34),
+    inset 0 1px rgba(255, 255, 255, 0.28);
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+button[${RAIL_ATTRIBUTE}] > ${RAIL_FISH_SELECTOR} {
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+}
+
+button[${RAIL_ATTRIBUTE}] > svg:not(${RAIL_FISH_SELECTOR}) {
+  position: relative;
+  z-index: 1;
+}
+
+button[${RAIL_ATTRIBUTE}]:hover::before {
+  opacity: 0;
+  transform: scale(0.88);
+}
+
 @media (prefers-contrast: more) {
   button[${BRAND_ATTRIBUTE}] {
     border-width: 2px;
@@ -115,27 +166,44 @@ button[${BRAND_ATTRIBUTE}]:focus-visible {
   button[${BRAND_ATTRIBUTE}]::after {
     background: linear-gradient(180deg, transparent 28%, rgba(1, 5, 18, 0.96) 100%);
   }
+
+  button[${RAIL_ATTRIBUTE}]::before {
+    border-width: 2px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   button[${BRAND_ATTRIBUTE}] {
     transition: none;
   }
+
+  button[${RAIL_ATTRIBUTE}]::before {
+    transition: none;
+  }
 }
 `
 }
 
-function markWordmarks(root: ParentNode, marked: Set<HTMLButtonElement>): void {
-  const wordmarks: Element[] = []
-  if (root instanceof Element && root.matches(BRAND_WORDMARK_SELECTOR)) wordmarks.push(root)
-  wordmarks.push(...root.querySelectorAll(BRAND_WORDMARK_SELECTOR))
+function markLogoButtons(
+  root: ParentNode,
+  selector: string,
+  attribute: string,
+  marked: Set<HTMLButtonElement>,
+): void {
+  const logos: Element[] = []
+  if (root instanceof Element && root.matches(selector)) logos.push(root)
+  logos.push(...root.querySelectorAll(selector))
 
-  for (const wordmark of wordmarks) {
-    const button = wordmark.parentElement
-    if (!(button instanceof HTMLButtonElement) || wordmark.parentElement !== button) continue
-    button.setAttribute(BRAND_ATTRIBUTE, '')
+  for (const logo of logos) {
+    const button = logo.parentElement
+    if (!(button instanceof HTMLButtonElement) || logo.parentElement !== button) continue
+    button.setAttribute(attribute, '')
     marked.add(button)
   }
+}
+
+function hasDirectLogo(button: HTMLButtonElement, selector: string): boolean {
+  return Array.from(button.children).some(child => child.matches(selector))
 }
 
 /** Install the portrait brand card and track wordmarks mounted after client activation. */
@@ -146,13 +214,23 @@ export function installBrandMascot(ctx: ClientContext): void {
     style.textContent = brandStyles(mascotImage)
     document.head.append(style)
 
-    const marked = new Set<HTMLButtonElement>()
-    markWordmarks(document, marked)
+    const markedCards = new Set<HTMLButtonElement>()
+    const markedRailButtons = new Set<HTMLButtonElement>()
+    markLogoButtons(document, BRAND_WORDMARK_SELECTOR, BRAND_ATTRIBUTE, markedCards)
+    markLogoButtons(document, RAIL_FISH_SELECTOR, RAIL_ATTRIBUTE, markedRailButtons)
 
     const observer = new MutationObserver((records) => {
       for (const record of records) {
         for (const node of record.addedNodes) {
-          if (node instanceof Element) markWordmarks(node, marked)
+          if (!(node instanceof Element)) continue
+          markLogoButtons(node, BRAND_WORDMARK_SELECTOR, BRAND_ATTRIBUTE, markedCards)
+          markLogoButtons(node, RAIL_FISH_SELECTOR, RAIL_ATTRIBUTE, markedRailButtons)
+        }
+        if (record.target instanceof HTMLButtonElement
+          && markedRailButtons.has(record.target)
+          && !hasDirectLogo(record.target, RAIL_FISH_SELECTOR)) {
+          record.target.removeAttribute(RAIL_ATTRIBUTE)
+          markedRailButtons.delete(record.target)
         }
       }
     })
@@ -160,7 +238,8 @@ export function installBrandMascot(ctx: ClientContext): void {
 
     return () => {
       observer.disconnect()
-      for (const button of marked) button.removeAttribute(BRAND_ATTRIBUTE)
+      for (const button of markedCards) button.removeAttribute(BRAND_ATTRIBUTE)
+      for (const button of markedRailButtons) button.removeAttribute(RAIL_ATTRIBUTE)
       style.remove()
     }
   }, 'harness-brand: mascot card')
