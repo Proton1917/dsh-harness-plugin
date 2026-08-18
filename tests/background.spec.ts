@@ -58,5 +58,8 @@ describe('web background client plugin', () => {
     expect(styles).toContain('@media (prefers-reduced-motion: reduce)')
     expect(styles).toContain("body[data-ds-dark-theme]")
     expect(styles).toContain('var(--dsh-background-conversation-left, 0px)')
+    expect(styles).toContain("[data-dsh-web-background-layer='portrait'] {\n  top: 0;\n  bottom: 0;")
+    expect(styles).toContain("[data-dsh-web-background-layer='scrim'] {\n  inset: 0;")
+    expect(styles).not.toContain("[data-dsh-web-background] > [data-dsh-web-background-layer] {\n  position: absolute;\n  inset: 0;")
   })
 })

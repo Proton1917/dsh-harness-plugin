@@ -29,7 +29,7 @@ describe('web brand mascot client plugin', () => {
     expect(document.querySelector('[data-dsh-brand-mascot-style]')?.textContent)
       .toContain('mascot.webp')
     expect(document.querySelector('[data-dsh-brand-mascot-style]')?.textContent)
-      .toContain('height: 84px')
+      .toContain('height: 324px')
 
     for (const dispose of effects.reverse()) dispose()
 
@@ -58,7 +58,48 @@ describe('web brand mascot client plugin', () => {
     expect(styles).toContain('@media (prefers-contrast: more)')
     expect(styles).toContain('@media (prefers-reduced-motion: reduce)')
     expect(styles).toContain('body[data-ds-dark-theme]')
+    expect(styles).toContain('button[data-dsh-brand-mascot]::before')
+    expect(styles).toContain('button[data-dsh-brand-mascot-rail]::before')
+    expect(styles).toContain('svg[viewBox="0 0 23.16 17.04"]')
+    expect(styles).toContain('width: 26px')
+    expect(styles).toContain('height: 34px')
+    expect(styles).toContain('background-position: center, center')
+    expect(styles).toContain('z-index: 2')
+    expect(styles).not.toContain("content: 'HARNESS'")
+    expect(styles).not.toContain('clip-path:')
+    expect(styles.slice(0, styles.indexOf('button[data-dsh-brand-mascot-rail]')))
+      .not.toContain('transform: scale')
 
     for (const dispose of effects.reverse()) dispose()
+  })
+
+  it('replaces the collapsed fish mark and retracts it when the rail expands', async () => {
+    document.body.innerHTML = `
+      <button aria-label="Open sidebar">
+        <svg class="railFish" viewBox="0 0 23.16 17.04"></svg>
+        <svg class="panelIcon" viewBox="0 0 16 16"></svg>
+      </button>
+    `
+    const effects: Array<() => void> = []
+    const ctx = {
+      effect: (install: () => (() => void)) => {
+        effects.push(install())
+      },
+    } as unknown as ClientContext
+
+    installBrandMascot(ctx)
+
+    const button = document.querySelector('button')!
+    expect(button.hasAttribute('data-dsh-brand-mascot-rail')).toBe(true)
+    button.querySelector('.railFish')?.remove()
+    await Promise.resolve()
+    expect(button.hasAttribute('data-dsh-brand-mascot-rail')).toBe(false)
+
+    button.insertAdjacentHTML('afterbegin', '<svg class="railFish" viewBox="0 0 23.16 17.04"></svg>')
+    await Promise.resolve()
+    expect(button.hasAttribute('data-dsh-brand-mascot-rail')).toBe(true)
+
+    for (const dispose of effects.reverse()) dispose()
+    expect(button.hasAttribute('data-dsh-brand-mascot-rail')).toBe(false)
   })
 })
