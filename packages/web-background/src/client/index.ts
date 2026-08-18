@@ -3,9 +3,12 @@ import type { ThemeTokenOverrides } from '@deepseek-ai/dsh-client-ui-theme/clien
 import type {} from '@deepseek-ai/dsh-client-ui-theme/client'
 import backgroundImage from '../assets/background.webp'
 
-const PACKAGE_ID = '@proton1917/dsh-harness-plugin'
+const PACKAGE_ID = '@proton1917/dsh-web-background'
 const BACKDROP_ATTRIBUTE = 'data-dsh-web-background'
 const LAYER_ATTRIBUTE = 'data-dsh-web-background-layer'
+
+/** Client services required by the semantic background theme. */
+export const inject = ['theme']
 
 /** Semantic glass surfaces applied on top of the built-in light and dark palettes. */
 export const BACKGROUND_TOKENS: ThemeTokenOverrides = Object.freeze({
@@ -222,4 +225,9 @@ export function installBackground(ctx: ClientContext): void {
       style.remove()
     }
   }, 'web-background: backdrop DOM')
+}
+
+/** Install the Web background Client plugin. */
+export function apply(ctx: ClientContext): void {
+  installBackground(ctx)
 }

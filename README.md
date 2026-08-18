@@ -1,36 +1,60 @@
-# DSH Harness Plugin
+# DSH Harness Plugins
 
-一个完整的 DeepSeek Harness 插件：同一个 Host 插件注册实时 token projection，同一个 Client 入口提供实时统计、蓝天花束背景和 DeepSeek 品牌角色卡。Harness profile 只挂载一个 package 和一个 bundle 条目。
+这个开源仓库包含三个可独立安装、启用、关闭和升级的 DeepSeek Harness 插件。根目录是 pnpm workspace，不是 DSH 插件；每个 `packages/*` 子目录都是一个完整 npm 包，并通过自己的 Bundle patch 向 Profile 插入一个 Cordis 插件条目。
 
-## 功能
+## 插件目录
 
-- **实时统计**：以 DeepSeek tokenizer 估算进行中的输入、输出与总 token；最终 provider usage 替换同一步估算；独立 TPS 行只使用真实流式输出增量及到达时间。
-- **背景主题**：原始蓝天花束图以像素保真的 Lanczos 重采样和轻微锐化提升为 2712 × 3600 高清 WebP，约 917 KB，足以覆盖大屏 Retina 对话区；模糊满幅环境层、完整清晰人像层和明暗遮罩层共同构成背景。清晰层以对话滚动区的实时矩形为坐标系，侧栏、详情栏和窗口尺寸变化时自动重新居中。主题 token 将画布、侧栏、输入框、菜单和气泡变成可读的玻璃层。
-- **品牌角色**：原始 1024 × 1536 高清眼镜角色竖图以高质量 WebP 铺满展开侧栏的 216 × 324 品牌卡，角色、鱼尾、桌子和环境均保留，官方 `DeepSeek HARNESS` 完整字标叠在图片上层；收起侧栏以同一完整构图的 26 × 34 圆角缩略卡片替换鲸鱼标识，悬停时仍显示官方展开按钮。品牌按钮的“新建会话”行为和无障碍标签不变。
+| 目录 | npm 包 | Bundle 条目 | 作用范围 |
+|---|---|---|---|
+| `packages/live-stats` | `@proton1917/dsh-live-stats` | `live-stats` | Host 实时 token projection，以及 Web 端轮次、耗时、缓存命中、token 和 TPS 展示 |
+| `packages/web-background` | `@proton1917/dsh-web-background` | `web-background` | 蓝天花束背景、对话区对齐和语义玻璃主题 token |
+| `packages/brand-mascot` | `@proton1917/dsh-brand-mascot` | `brand-mascot` | 侧栏完整品牌角色卡、官方 `DeepSeek HARNESS` 字标叠层和收起态人物缩略标识 |
 
-图片以内联 data URL 打包，不需要额外静态路由。明暗模式、高对比度和减少动态效果偏好均有独立样式。所有 DOM、observer、主题 token 和字典注册都由 Cordis effect disposer 撤回，HMR 不会叠加副本。
+三个插件不相互导入源码或运行时状态。删除或关闭其中一个插件不会移除另外两个插件的能力。
 
-## 安装到 Harness profile
+## 安装到 Web Profile
+
+首次从旧的单包结构迁移时，先删除旧包：
 
 ```sh
-dsh plugin --profile web add .
+dsh plugin --profile web remove @proton1917/dsh-harness-plugin
 ```
 
-`dsh.bundle.patch` 只插入一个 `harness-plugin` 条目。当前 Client 功能在 Web profile 呈现，Host projection 与整个 Harness session 日志协同。正常运行：
+再分别安装三个子包：
 
 ```sh
+dsh plugin --profile web add ./packages/live-stats
+dsh plugin --profile web add ./packages/web-background
+dsh plugin --profile web add ./packages/brand-mascot
+```
+
+根目录不声明 `dsh.bundle`，不能作为第四个插件安装。安装后用以下命令验证三个独立配置层和条目：
+
+```sh
+dsh --profile web --dump-config
 dsh web
+```
+
+任一插件可以单独移除。例如只关闭品牌角色：
+
+```sh
+dsh plugin --profile web remove @proton1917/dsh-brand-mascot
 ```
 
 ## 开发验证
 
+从仓库根目录安装依赖并运行全部门禁：
+
 ```sh
 pnpm install
 pnpm run ci
-pnpm pack --dry-run
+pnpm run pack:check
+git diff --check
 ```
 
-已安装的 link bundle 始终指向本目录。修改后运行 `pnpm run build`；已有插件条目可由 DSH Client HMR 重载，package 首次加入或名称变化需要重启一次服务。
+`pnpm run ci` 依次运行三个包的类型检查、单元测试和完整构建。`pnpm run pack:check` 分别检查三个 npm 包的实际打包清单，防止遗漏 Client bundle、类型声明、图片或 tokenizer 文件。
+
+用户可见改动还需要在真实 Harness Web 中验证。三个插件同时启用时，应当看到实时统计、背景和品牌角色；逐一移除后，只能撤回对应插件拥有的 DOM、主题 token、projection、字典和插槽注册。
 
 ## 兼容性边界
 
@@ -40,6 +64,6 @@ pnpm pack --dry-run
 
 仓库源码采用 [BSD-3-Clause](LICENSE)。`package.json` 保留 `"private": true`，仅用于阻止意外发布到 npm registry，不限制 GitHub 上的源码使用和再分发。
 
-`src/assets/background.webp` 和 `src/assets/mascot.webp` 是仓库所有者授权随本仓库公开发布的图片衍生文件，并按 BSD-3-Clause 分发；该授权不授予任何第三方商标、角色或原始作品中超出仓库所有者控制范围的权利。详见 [ASSET_NOTICE.md](ASSET_NOTICE.md)。
+`packages/web-background/src/assets/background.webp` 和 `packages/brand-mascot/src/assets/mascot.webp` 是仓库所有者授权随本仓库公开发布的图片衍生文件，并按 BSD-3-Clause 分发；该授权不授予任何第三方商标、角色或原始作品中超出仓库所有者控制范围的权利。详见 [ASSET_NOTICE.md](ASSET_NOTICE.md) 和各包的通知文件。
 
-`assets/deepseek-v3/` 中 tokenizer 的来源、校验和与随附 MIT 许可证见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+`packages/live-stats/assets/deepseek-v3/` 中 tokenizer 的来源、校验和与随附 MIT 许可证见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

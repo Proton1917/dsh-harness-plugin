@@ -97,27 +97,22 @@ describe('plugin-owned statistics row', () => {
   })
 
   it('shadows the built-in stats cell through the documented slot priority', () => {
-    document.body.innerHTML = `
-      <div id="root"></div>
-      <button aria-label="New Session"><svg viewBox="0 0 182 24"></svg></button>
-    `
     const register = vi.fn(() => () => {})
+    const injectSlot = vi.fn((_name: string, install: () => unknown) => install())
     const registerLocale = vi.fn(() => () => {})
-    const overrideTokens = vi.fn(() => () => {})
     const effects: Array<() => void> = []
     const ctx = {
       effect: (factory: () => () => void) => {
         effects.push(factory())
       },
       locale: { register: registerLocale },
-      slots: { register },
-      theme: { overrideTokens },
+      slots: { inject: injectSlot, register },
     } as unknown as ClientContext
     apply(ctx)
-    expect(overrideTokens).toHaveBeenCalledOnce()
-    expect(document.querySelectorAll('[data-dsh-web-background]')).toHaveLength(1)
-    expect(document.querySelectorAll('button[data-dsh-brand-mascot]')).toHaveLength(1)
     expect(registerLocale).toHaveBeenCalledWith(LIVE_STATS_NS, expect.any(Object))
+    expect(injectSlot).toHaveBeenCalledTimes(2)
+    expect(injectSlot).toHaveBeenNthCalledWith(1, 'conversation.composer.dock', expect.any(Function))
+    expect(injectSlot).toHaveBeenNthCalledWith(2, 'conversation.composer.dock', expect.any(Function))
     expect(register.mock.calls[0]?.[0]).toMatchObject({
       name: 'conversation.composer.dock',
       id: 'stats',
