@@ -31,7 +31,7 @@ describe('medical Client submission', () => {
     })).toEqual({ provider: 'cc-api', model: 'claude-fable-5', reasoningEffort: 'high' })
   })
 
-  it('creates, titles, opens, arms, and prompts one fresh session in order', async () => {
+  it('creates, arms, titles, prompts, and opens one fresh session in order', async () => {
     const order: string[] = []
     const createSession = vi.fn(async () => { order.push('create') })
     const rename = vi.fn(async () => {
@@ -54,7 +54,7 @@ describe('medical Client submission', () => {
     })
     const id = await submit(input, [], 'workspace-1' as WorkspaceId)
     expect(typeof id).toBe('string')
-    expect(order).toEqual(['create', 'wait', 'rename', 'open', 'arm', 'prompt'])
+    expect(order).toEqual(['create', 'wait', 'arm', 'rename', 'prompt', 'open'])
     expect(createSession).toHaveBeenCalledWith(expect.any(String), 'workspace-1', 'standard')
     expect(rename).toHaveBeenCalledWith('医学病例 · 发热伴咳嗽 5 天')
     expect(prompt.mock.calls[0]?.[0][0]).toMatchObject({
@@ -63,7 +63,7 @@ describe('medical Client submission', () => {
     expect(prompt).toHaveBeenCalledWith(expect.any(Array), 'queue')
   })
 
-  it('does not open, arm, or prompt a session whose deterministic rename failed', async () => {
+  it('does not open or prompt an admitted session whose deterministic rename failed', async () => {
     const openSession = vi.fn()
     const prompt = vi.fn()
     const armSession = vi.fn()
@@ -82,8 +82,44 @@ describe('medical Client submission', () => {
     })
     await expect(submit(input, [])).rejects.toThrow('会话命名失败')
     expect(openSession).not.toHaveBeenCalled()
-    expect(armSession).not.toHaveBeenCalled()
+    expect(armSession).toHaveBeenCalledOnce()
     expect(prompt).not.toHaveBeenCalled()
+  })
+
+  it('does not rename, open, or prompt a session whose medical admission failed', async () => {
+    const rename = vi.fn()
+    const openSession = vi.fn()
+    const prompt = vi.fn()
+    const session = { rename, prompt } as unknown as SessionFace
+    const submit = createMedicalSubmitter({
+      createSession: async (_sessionId: SessionId) => {},
+      waitForSession: async () => session,
+      openSession,
+      armSession: async () => { throw new Error('admission failed') },
+    })
+    await expect(submit(input, [])).rejects.toThrow('admission failed')
+    expect(rename).not.toHaveBeenCalled()
+    expect(openSession).not.toHaveBeenCalled()
+    expect(prompt).not.toHaveBeenCalled()
+  })
+
+  it('does not open a session whose medical Prompt was rejected', async () => {
+    const openSession = vi.fn()
+    const session = {
+      rename: vi.fn(async () => ({ ok: true as const, value: { title: '医学病例', seq: 1 } })),
+      prompt: vi.fn(async () => ({
+        ok: false as const,
+        error: { code: 'prompt-rejected', message: 'rejected', details: {} },
+      })),
+    } as unknown as SessionFace
+    const submit = createMedicalSubmitter({
+      createSession: async (_sessionId: SessionId) => {},
+      waitForSession: async () => session,
+      openSession,
+      armSession: async () => {},
+    })
+    await expect(submit(input, [])).rejects.toThrow('病例提交失败')
+    expect(openSession).not.toHaveBeenCalled()
   })
 
   it('serializes supported images beside the case text', async () => {

@@ -140,6 +140,11 @@ export class MedicalTurnCoordinator {
     this.active.get(agent)?.cleanup()
   }
 
+  /** Cancel a pending structured turn before another Agent Preset takes ownership. */
+  presetSelected(agent: Agent): void {
+    this.active.get(agent)?.cleanup()
+  }
+
   /** Remove every owned scope during plugin teardown. */
   dispose(): void {
     for (const state of [...this.active.values()]) state.cleanup()

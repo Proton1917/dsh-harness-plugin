@@ -11,7 +11,7 @@ export type MedicalClientContext = Omit<ClientContext, 'sessions' | 'workspaces'
   workspaces: IWorkspaces
 }
 
-/** Dependencies of the deterministic create → rename → command sequence. */
+/** Dependencies of the deterministic create → arm → rename → prompt → open sequence. */
 export interface MedicalSubmitDependencies {
   createSession: (
     sessionId: SessionId,
@@ -97,14 +97,14 @@ export function createMedicalSubmitter(deps: MedicalSubmitDependencies) {
     const sessionId = crypto.randomUUID() as SessionId
     await deps.createSession(sessionId, workspaceId, 'standard')
     const session = await deps.waitForSession(sessionId)
+    await deps.armSession(sessionId, images.length > 0)
     const renamed = await session.rename(medicalSessionTitle(input.chiefComplaint))
     if (!renamed.ok) {
       throw new Error(`医学病例会话命名失败：${renamed.error.message}`)
     }
-    deps.openSession(sessionId)
-    await deps.armSession(sessionId, images.length > 0)
     const prompted = await session.prompt(await medicalPromptContent(input, images), 'queue')
     if (!prompted.ok) throw new Error(`医学病例提交失败：${prompted.error.message}`)
+    deps.openSession(sessionId)
     return sessionId
   }
 }

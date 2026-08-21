@@ -66,9 +66,9 @@ git diff --check
 结构化病例每次执行以下流程：
 
 1. 通过官方 `session.create` 创建新的 DSH 会话；
-2. 在发送病例前写入确定性标题，避免额外标题模型调用；
-3. 通过 `/medical-analyze` 准备下一条标准 `user/message`；病例正文不进入命令参数；
-4. 该轮临时使用 `cc-api` / `claude-fable-5` / `high`，不暴露或执行工具；
+2. 通过 `/medical-analyze` 准备下一条标准 `user/message`；病例正文不进入命令参数，准入失败不会改标题或打开失败会话；
+3. 在发送病例前写入确定性标题，避免额外标题模型调用；
+4. 该轮临时使用 `cc-api` / `claude-fable-5` / `high`，不暴露或执行工具；切换 Agent Preset 会立即撤销尚未开始的医学作用域；
 5. 最多执行一个模型请求，Agent 回到 idle 后撤销全部医学作用域；
 6. 纯文本病例结束后恢复会话原有模型路由。
 

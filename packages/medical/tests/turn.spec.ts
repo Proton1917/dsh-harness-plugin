@@ -103,6 +103,15 @@ describe('/medical-analyze and coordinator', () => {
     expect(harness.disposers.every(dispose => dispose.mock.calls.length === 1)).toBe(true)
   })
 
+  it('cleans a pending structured scope when another preset is selected', () => {
+    const harness = fakeAgent()
+    coordinator.arm(harness.agent, false)
+    coordinator.presetSelected(harness.agent)
+    expect(coordinator.has(harness.agent)).toBe(false)
+    expect(harness.disposers).toHaveLength(4)
+    expect(harness.disposers.every(dispose => dispose.mock.calls.length === 1)).toBe(true)
+  })
+
   it('expires an armed scope when no Prompt arrives', () => {
     vi.useFakeTimers()
     const harness = fakeAgent()

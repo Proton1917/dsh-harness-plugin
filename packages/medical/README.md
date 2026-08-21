@@ -34,10 +34,10 @@ dsh plugin --profile web remove @proton1917/dsh-medical
 ## 结构化病例数据流
 
 1. Client 通过官方 `session.create` 创建全新 `standard` 会话；优先沿用当前会话所属 Workspace，其次使用最近 Workspace，没有 Workspace 时创建未分组会话。
-2. Client 在病例消息前写入 `医学病例 · <主诉摘要>` 确定性标题。标题写入失败则停止，不调用标题模型。
-3. Client 在新会话执行 `/medical-analyze text|image`。命令 `recordInput: false`，病例内容不进入 command 参数或 command 记录。
-4. 命令只为该 Agent 的下一条标准 Prompt 安装医学完整提示、关闭运行时上下文、隐藏并拒绝全部工具，并准备精确 Fable 路由。
-5. Client 通过标准 `SessionFace.prompt` 提交结构化文本和可选原图；附件服务保存图片字节，Session Log 保存标准引用。
+2. Client 在新会话执行 `/medical-analyze text|image`。命令 `recordInput: false`，病例内容不进入 command 参数或 command 记录；准入失败时不改标题，也不打开失败会话。
+3. 命令只为该 Agent 的下一条标准 Prompt 安装医学完整提示、关闭运行时上下文、隐藏并拒绝全部工具，并准备精确 Fable 路由。病例 Prompt 前发生任何 Agent Preset 切换都会撤销这份临时作用域。
+4. Client 在病例消息前写入 `医学病例 · <主诉摘要>` 确定性标题。标题写入失败则停止，不调用标题模型。
+5. Client 通过标准 `SessionFace.prompt` 提交结构化文本和可选原图；附件服务保存图片字节，Session Log 保存标准引用。Prompt 被接受后才打开病例会话。
 6. 第一个 `agent/request` 使用配置的医学路由，并删除继承的 `maxTokens`；第二个模型步骤被拒绝。Agent 回到 idle、准备超时或被销毁时，临时作用域全部撤销。
 7. 纯文本病例恢复提交前路由；含图片病例保留 Fable 请求头，避免把已有图像历史切回文本模型。
 

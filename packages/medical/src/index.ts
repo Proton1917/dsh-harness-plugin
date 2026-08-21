@@ -82,7 +82,9 @@ export function apply(ctx: Context, config: Config = DEFAULT_MEDICAL_SETTINGS): 
   ctx.on('agent/created', ({ agent }) => { medicalMode.sync(agent) })
   ctx.on('agent-preset/selected', (sessionId) => {
     const agent = ctx.agents.get(sessionId)
-    if (agent !== undefined) medicalMode.sync(agent)
+    if (agent === undefined) return
+    coordinator.presetSelected(agent)
+    medicalMode.sync(agent)
   })
   ctx.on('agent/disposed', ({ agent }) => {
     coordinator.disposeAgent(agent)
