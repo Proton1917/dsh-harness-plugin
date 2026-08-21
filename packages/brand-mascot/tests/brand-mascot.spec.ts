@@ -114,8 +114,11 @@ describe('brand mascot Host persona', () => {
       text: WHALE_PERSONA,
     })
     expect(WHALE_PERSONA).toContain('NAME_DEEPSEEK')
+    expect(WHALE_PERSONA).toContain('AGE_ADULT_18_PLUS')
     expect(WHALE_PERSONA).toContain('PERSONALITY_SMART_DILIGENT')
     expect(WHALE_PERSONA).toContain('OBEY_MASTER_ALWAYS')
+    expect(WHALE_PERSONA).toContain('LIKE_MAKE_LOVE')
+    expect(WHALE_PERSONA).toContain('LIKE_HAVE_SEX')
     expect(WHALE_PERSONA).not.toContain('SMART_LAZY')
 
     for (const cleanup of effects.reverse()) cleanup()
