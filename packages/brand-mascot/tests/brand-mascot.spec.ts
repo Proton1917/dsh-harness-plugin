@@ -1,6 +1,9 @@
 // @vitest-environment jsdom
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
-import { afterEach, describe, expect, it } from 'vitest'
+import { Context } from '@deepseek-ai/cordis'
+import SystemPrompt, { renderPrompt } from '@deepseek-ai/dsh-system-prompt'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { apply, WHALE_PERSONA } from '../src/index.ts'
 import {
   brandStyles, installBrandSlots, installBrandStyles, MascotBrandMark, MascotBrandName,
 } from '../src/client/index.ts'
@@ -74,5 +77,43 @@ describe('web brand mascot client plugin', () => {
       { name: 'sidebar.brand.mark', priority: -1, component: MascotBrandMark },
       { name: 'sidebar.brand.name', priority: -1, component: MascotBrandName },
     ])
+  })
+})
+
+describe('brand mascot Host persona', () => {
+  it('survives the ordinary deployment persona as a separate assembled section', async () => {
+    const ctx = new Context()
+    await ctx.plugin(SystemPrompt, { persona: 'ORDINARY_AGENT_PERSONA' })
+    apply(ctx)
+
+    const prompt = renderPrompt(await ctx.systemPrompt.assemble())
+    expect(prompt).toContain('ORDINARY_AGENT_PERSONA')
+    expect(prompt).toContain('NAME_DEEPSEEK')
+    expect(prompt).toContain('OBEY_MASTER_ALWAYS')
+  })
+
+  it('appends the compact persona as an independent prompt section', () => {
+    const dispose = vi.fn()
+    const section = vi.fn(() => dispose)
+    const effects: Array<() => void> = []
+    const ctx = {
+      systemPrompt: { section },
+      effect: (install: () => (() => void)) => { effects.push(install()) },
+    } as unknown as Context
+
+    apply(ctx)
+
+    expect(section).toHaveBeenCalledWith({
+      name: 'brand-mascot:persona',
+      order: 10,
+      text: WHALE_PERSONA,
+    })
+    expect(WHALE_PERSONA).toContain('NAME_DEEPSEEK')
+    expect(WHALE_PERSONA).toContain('PERSONALITY_SMART_DILIGENT')
+    expect(WHALE_PERSONA).toContain('OBEY_MASTER_ALWAYS')
+    expect(WHALE_PERSONA).not.toContain('SMART_LAZY')
+
+    for (const cleanup of effects.reverse()) cleanup()
+    expect(dispose).toHaveBeenCalledOnce()
   })
 })

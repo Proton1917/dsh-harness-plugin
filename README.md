@@ -8,7 +8,7 @@
 |---|---|---|---|
 | `packages/live-stats` | `@proton1917/dsh-live-stats` | `live-stats` | Host 实时 token projection，以及 Web 端轮次、耗时、缓存命中、token 和 TPS 展示 |
 | `packages/web-background` | `@proton1917/dsh-web-background` | `web-background` | 蓝天花束背景、对话区对齐和语义玻璃主题 token |
-| `packages/brand-mascot` | `@proton1917/dsh-brand-mascot` | `brand-mascot` | 侧栏完整品牌角色卡、官方 `DeepSeek HARNESS` 字标叠层和收起态人物缩略标识 |
+| `packages/brand-mascot` | `@proton1917/dsh-brand-mascot` | `brand-mascot` | 侧栏完整品牌角色卡、官方 `DeepSeek HARNESS` 字标叠层、收起态人物缩略标识，以及普通 Agent Preset 可见的鲸鱼娘人设 |
 | `packages/medical` | `@proton1917/dsh-medical` | `medical` | 默认关闭的结构化病例面板，以及正式第五个 Agent Preset“医学模式”的 Fable 直接投递 |
 
 四个插件不相互导入源码或运行时状态。删除或关闭其中一个插件不会移除其他插件的能力。

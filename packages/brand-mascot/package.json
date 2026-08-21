@@ -1,7 +1,7 @@
 {
   "name": "@proton1917/dsh-brand-mascot",
   "version": "0.1.0",
-  "description": "DeepSeek Harness sidebar brand mascot card",
+  "description": "DeepSeek Harness sidebar brand mascot card and whale-girl persona",
   "private": true,
   "type": "module",
   "main": "lib/index.js",
@@ -46,12 +46,14 @@
     "@deepseek-ai/cordis": "^4.0.1",
     "@deepseek-ai/dsh-client-runtime": "^0.1.0-rc.8",
     "@deepseek-ai/dsh-client-ui-sidebar": "^0.1.0-rc.8",
+    "@deepseek-ai/dsh-system-prompt": "^0.1.0-rc.7",
     "react": "^18.2.0"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.1",
     "@deepseek-ai/dsh-client-runtime": "0.1.0-rc.8",
     "@deepseek-ai/dsh-client-ui-sidebar": "0.1.0-rc.8",
+    "@deepseek-ai/dsh-system-prompt": "0.1.0-rc.7",
     "@types/react": "~18.3.1",
     "jsdom": "^26.0.0",
     "react": "^18.2.0",
