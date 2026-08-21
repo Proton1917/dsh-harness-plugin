@@ -78,7 +78,7 @@ git diff --check
 
 ## 兼容性边界
 
-DSH `rc.8` 通过 `sidebar.brand.mark` 和 `sidebar.brand.name` 提供正式品牌扩展点，品牌插件以优先级 `-1` 覆盖本地构建的默认标识。插件不保留旧版 DOM 选择器；上游修改品牌插槽时必须同步更新此插件。
+本仓库按 DSH `0.1.1-rc.1` 的插件接口构建。实时统计使用新版 session projection 的 `stateSchema` 与 Client `wire`，四个插件不保留 `0.1.0-rc.7/rc.8` 的旧 API 分支。品牌插件通过 `sidebar.brand.mark` 和 `sidebar.brand.name` 正式扩展点，以优先级 `-1` 覆盖本地构建的默认标识；上游修改这些接口时必须同步更新插件并重新做真实 Web 验证。
 
 ## 许可证与公开分发
 

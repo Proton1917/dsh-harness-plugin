@@ -57,7 +57,7 @@ interface ActiveStep {
   step: number
   buckets: TokenUsageProjection
   exact: boolean
-  blocks: Array<OutputBlock | undefined>
+  blocks: Array<OutputBlock | null>
   firstOutputTime?: number
   firstOutputTokens?: number
   latestOutputTime?: number
@@ -80,6 +80,71 @@ interface State {
   header: EpochHeader | undefined
   active: ActiveStep | null
 }
+
+declare module '@deepseek-ai/dsh-session-projection/types' {
+  interface SessionProjectionStateMap {
+    liveTokenUsage: State
+  }
+}
+
+const tokenBucketsSchema = z.object({
+  uncachedInputTokens: z.number().int().nonnegative(),
+  outputTokens: z.number().int().nonnegative(),
+  cacheReadTokens: z.number().int().nonnegative(),
+  cacheWriteTokens: z.number().int().nonnegative(),
+}).strict()
+
+const outputBlockSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('text'), text: z.string() }).strict(),
+  z.object({ type: z.literal('reasoning'), text: z.string() }).strict(),
+  z.object({
+    type: z.literal('tool-call'),
+    id: z.string(),
+    name: z.string(),
+    arguments: z.string(),
+  }).strict(),
+  z.object({
+    type: z.literal('fixed'),
+    block: z.custom<ContentBlock>(value => typeof value === 'object'
+      && value !== null
+      && typeof (value as { type?: unknown }).type === 'string'),
+  }).strict(),
+])
+
+const activeStepSchema = z.object({
+  turn: z.number().int().nonnegative(),
+  step: z.number().int().nonnegative(),
+  buckets: tokenBucketsSchema,
+  exact: z.boolean(),
+  blocks: z.array(outputBlockSchema.nullable()),
+  firstOutputTime: z.number().nonnegative().optional(),
+  firstOutputTokens: z.number().int().nonnegative().optional(),
+  latestOutputTime: z.number().nonnegative().optional(),
+}).strict()
+
+const settledSampleSchema = z.object({
+  turn: z.number().int().nonnegative(),
+  step: z.number().int().nonnegative(),
+  buckets: tokenBucketsSchema,
+  estimated: z.boolean(),
+  tokensPerSecond: z.number().nonnegative().optional(),
+}).strict()
+
+const stateSchema = z.object({
+  settled: tokenBucketsSchema,
+  settledEstimates: z.number().int().nonnegative(),
+  last: settledSampleSchema.nullable(),
+  surface: z.array(z.object({
+    seq: z.number().int().nonnegative(),
+    tokens: z.number().int().nonnegative(),
+  }).strict()),
+  surfaceTokens: z.number().int().nonnegative(),
+  header: z.custom<EpochHeader>(value => typeof value === 'object'
+    && value !== null
+    && typeof (value as { config?: unknown }).config === 'object'
+    && (value as { config?: unknown }).config !== null).optional(),
+  active: activeStepSchema.nullable(),
+}).strict() as z.ZodType<State>
 
 function surfaceMessage(event: SurfaceEvent): Message {
   switch (event.type) {
@@ -124,10 +189,12 @@ function applySurface(
 }
 
 function applyOutputChunk(
-  blocks: Array<OutputBlock | undefined>,
+  blocks: Array<OutputBlock | null>,
   chunk: StreamChunk,
-): Array<OutputBlock | undefined> {
+): Array<OutputBlock | null> {
+  if (chunk.type === 'usage' || chunk.type === 'finish') return blocks
   const next = [...blocks]
+  while (next.length <= chunk.index) next.push(null)
   switch (chunk.type) {
     case 'text-delta': {
       if (chunk.text === '') return blocks
@@ -166,10 +233,10 @@ function applyOutputChunk(
   }
 }
 
-function outputTokens(blocks: readonly (OutputBlock | undefined)[], counter: TokenCounter): number {
+function outputTokens(blocks: readonly (OutputBlock | null)[], counter: TokenCounter): number {
   const content: ContentBlock[] = []
   for (const block of blocks) {
-    if (block === undefined) continue
+    if (block === null) continue
     content.push(block.type === 'fixed' ? block.block : block)
   }
   return counter.countAssistantOutput(content)
@@ -228,10 +295,10 @@ function view(state: State): LiveTokenUsageProjection {
 /** Create the replayable live usage projection consumed by DSH Web and the TPS row. */
 export function createLiveTokenUsageProjectionDefinition(
   counter: TokenCounter,
-): ProjectionDefinition<'liveTokenUsage', State> {
+) {
   return {
     key: 'liveTokenUsage',
-    schema: projectionSchema,
+    stateSchema,
     init: () => ({
       settled: zeroBuckets(),
       settledEstimates: 0,
@@ -345,7 +412,7 @@ export function createLiveTokenUsageProjectionDefinition(
       if (isSurfaceEvent(event)) next = { ...next, ...applySurface(next, event, counter) }
       return next
     },
-    view,
-    stateVersion: 2,
-  }
+    wire: { viewSchema: projectionSchema, view },
+    stateVersion: 3,
+  } satisfies ProjectionDefinition<'liveTokenUsage', State>
 }

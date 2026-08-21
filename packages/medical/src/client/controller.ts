@@ -168,7 +168,7 @@ export class MedicalClientController {
       waitForSession: sessionId => waitForSession(ctx, sessionId),
       openSession: sessionId => { ctx.sessions.open(sessionId) },
       armSession: async (sessionId, hasImages) => {
-        const result = await ctx.remote.commands.execute(sessionId, medicalCommandLine(hasImages))
+        const result = await ctx.remote.commands.execute(sessionId, medicalCommandLine(hasImages), [])
         if (!result.ok) throw new Error(`医学分析命令失败：${result.error.message}`)
         if (result.value === undefined) throw new Error('医学分析命令未注册。')
         if (result.value.result.kind === 'error') {
