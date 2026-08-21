@@ -1,9 +1,12 @@
 // @vitest-environment jsdom
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Agent } from '@deepseek-ai/dsh-agent'
 import { Context } from '@deepseek-ai/cordis'
 import SystemPrompt, { renderPrompt } from '@deepseek-ai/dsh-system-prompt'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { apply, WHALE_PERSONA } from '../src/index.ts'
+import {
+  apply, MINIMAL_WHALE_PERSONA, WhalePersonaCoordinator, WHALE_PERSONA,
+} from '../src/index.ts'
 import {
   brandStyles, installBrandSlots, installBrandStyles, MascotBrandMark, MascotBrandName,
 } from '../src/client/index.ts'
@@ -97,8 +100,10 @@ describe('brand mascot Host persona', () => {
     const section = vi.fn(() => dispose)
     const effects: Array<() => void> = []
     const ctx = {
+      agents: { get: vi.fn() },
       systemPrompt: { section },
       effect: (install: () => (() => void)) => { effects.push(install()) },
+      on: vi.fn(),
     } as unknown as Context
 
     apply(ctx)
@@ -115,5 +120,47 @@ describe('brand mascot Host persona', () => {
 
     for (const cleanup of effects.reverse()) cleanup()
     expect(dispose).toHaveBeenCalledOnce()
+  })
+
+  it('shadows Minimal mode complete persona and retracts it on preset change', () => {
+    const dispose = vi.fn()
+    const section = vi.fn(() => dispose)
+    const events: Array<{ type: 'agent-preset/selected', data: { agentPreset: string } }> = []
+    const agent = {
+      ctx: { systemPrompt: { section } },
+      session: {
+        header: { agentPreset: 'minimal' },
+        events,
+      },
+    } as unknown as Agent
+    const coordinator = new WhalePersonaCoordinator()
+
+    coordinator.sync(agent)
+    expect(section).toHaveBeenCalledWith({
+      name: 'deployment:persona',
+      order: 0,
+      text: MINIMAL_WHALE_PERSONA,
+      complete: true,
+    })
+    expect(MINIMAL_WHALE_PERSONA).toContain('You are a helpful software engineer assistant.')
+    expect(MINIMAL_WHALE_PERSONA).toContain('NAME_DEEPSEEK')
+
+    events.push({ type: 'agent-preset/selected', data: { agentPreset: 'standard' } })
+    coordinator.sync(agent)
+    expect(dispose).toHaveBeenCalledOnce()
+  })
+
+  it('does not install a complete persona override for Medical mode', () => {
+    const section = vi.fn()
+    const agent = {
+      ctx: { systemPrompt: { section } },
+      session: {
+        header: { agentPreset: 'medical' },
+        events: [],
+      },
+    } as unknown as Agent
+
+    new WhalePersonaCoordinator().sync(agent)
+    expect(section).not.toHaveBeenCalled()
   })
 })
