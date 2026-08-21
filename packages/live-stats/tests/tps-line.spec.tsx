@@ -48,6 +48,51 @@ describe('TPS composer line', () => {
     view.rerender(<TpsLine useProjection={live} t={t} />)
     expect(view.container.textContent).toBe('TPS 42.6 tok/s')
   })
+
+  it('falls back to settled decode throughput between streamed samples', () => {
+    const settled = ((key: string): unknown => key === 'liveTokenUsage'
+      ? { estimated: false, uncachedInputTokens: 10, outputTokens: 60, cacheReadTokens: 0, cacheWriteTokens: 0 }
+      : key === 'sessionStats'
+        ? {
+          turns: 1,
+          steps: 2,
+          llmMs: 3_800,
+          toolMs: 0,
+          ttftMs: 800,
+          ttftSteps: 1,
+          decodeMs: 3_000,
+          decodeTokens: 60,
+        }
+        : undefined) as UseProjection
+    const view = render(<TpsLine useProjection={settled} t={t} />)
+    expect(view.container.textContent).toBe('TPS 20 tok/s')
+  })
+
+  it('prefers the current streamed rate over settled throughput', () => {
+    const streaming = ((key: string): unknown => key === 'liveTokenUsage'
+      ? {
+        estimated: true,
+        uncachedInputTokens: 10,
+        outputTokens: 20,
+        cacheReadTokens: 0,
+        cacheWriteTokens: 0,
+        tokensPerSecond: 42.64,
+      }
+      : key === 'sessionStats'
+        ? {
+          turns: 1,
+          steps: 2,
+          llmMs: 3_800,
+          toolMs: 0,
+          ttftMs: 800,
+          ttftSteps: 1,
+          decodeMs: 3_000,
+          decodeTokens: 60,
+        }
+        : undefined) as UseProjection
+    const view = render(<TpsLine useProjection={streaming} t={t} />)
+    expect(view.container.textContent).toBe('TPS 42.6 tok/s')
+  })
 })
 
 describe('plugin-owned statistics row', () => {
