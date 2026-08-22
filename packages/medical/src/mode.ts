@@ -82,7 +82,7 @@ export class MedicalModeCoordinator {
     }
   }
 
-  /** Route every user turn in Medical mode to one configured Fable request. */
+  /** Route every user turn in Medical mode through the configured Fable route. */
   async routeRequest(agent: Agent, next: () => Promise<LlmCallConfig>): Promise<LlmCallConfig> {
     const resolved = await next()
     if (!isMedicalMode(agent)) return resolved

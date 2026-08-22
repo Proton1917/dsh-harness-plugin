@@ -62,7 +62,7 @@ describe('Medical Agent Preset routing', () => {
     expect(rename).toHaveBeenCalledWith(harness.agent.session, '医学病例 · 咳嗽 3 天')
   })
 
-  it('pins the header and every request to Fable without an inherited token cap', async () => {
+  it('keeps one cache-stable Fable header across multiple user turns', async () => {
     const harness = modeAgent('medical')
     const coordinator = new MedicalModeCoordinator(() => settings)
     coordinator.sync(harness.agent)
@@ -78,6 +78,8 @@ describe('Medical Agent Preset routing', () => {
     expect((await coordinator.routeRequest(harness.agent, async () => ({
       provider: 'deepseek-official', model: 'deepseek-v4-pro', maxTokens: 8_000,
     }))).maxTokens).toBeUndefined()
+    coordinator.sync(harness.agent)
+    expect(harness.append).toHaveBeenCalledTimes(1)
   })
 
   it('rejects a new Medical-mode request while disabled and leaves ordinary presets unchanged', async () => {
