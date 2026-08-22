@@ -1,3 +1,5 @@
+import type {} from '@deepseek-ai/dsh-client-ui-slots'
+
 /** Locale namespace owned by the live statistics rows. */
 export const LIVE_STATS_NS = 'liveStats'
 

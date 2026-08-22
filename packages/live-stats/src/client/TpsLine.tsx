@@ -32,7 +32,12 @@ const STYLE = {
 
 /** Second composer-status line for active or latest response throughput. */
 export const TpsLine = memo(function TpsLine({ useProjection, t }: TpsLineProps) {
-  const rate = useProjection('liveTokenUsage')?.tokensPerSecond
+  const liveRate = useProjection('liveTokenUsage')?.tokensPerSecond
+  const stats = useProjection('sessionStats')
+  const settledRate = stats !== undefined && stats.decodeMs > 0
+    ? stats.decodeTokens / (stats.decodeMs / 1_000)
+    : undefined
+  const rate = liveRate ?? settledRate
   if (rate === undefined) return null
   return <div style={STYLE}>{t('tps', { throughput: formatTokensPerSecond(rate) })}</div>
 })

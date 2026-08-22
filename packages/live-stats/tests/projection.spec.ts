@@ -95,6 +95,58 @@ describe('liveTokenUsage projection', () => {
     })
   })
 
+  it('publishes changing TPS frames while output deltas arrive', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(1_000)
+    const { ctx, session } = await harness()
+    const rates: number[] = []
+    ctx.sessionProjections.onChanged((changedSession, key, value) => {
+      if (changedSession !== session || key !== 'liveTokenUsage') return
+      const rate = (value as LiveTokenUsageProjection).tokensPerSecond
+      if (rate !== undefined) rates.push(rate)
+    })
+    session.append('step/start', { turn: 1, step: 1 })
+
+    session.append('assistant/chunk', {
+      turn: 1,
+      step: 1,
+      chunk: { type: 'text-delta', index: 0, text: 'abcd' },
+    })
+    vi.setSystemTime(2_000)
+    session.append('assistant/chunk', {
+      turn: 1,
+      step: 1,
+      chunk: { type: 'text-delta', index: 0, text: 'efgh' },
+    })
+    vi.setSystemTime(2_500)
+    session.append('assistant/chunk', {
+      turn: 1,
+      step: 1,
+      chunk: { type: 'text-delta', index: 0, text: 'ijklmnop' },
+    })
+
+    expect(rates).toHaveLength(2)
+    expect(rates[0]).not.toBe(rates[1])
+    expect(rates[0]).toBeGreaterThan(0)
+    expect(rates[1]).toBeGreaterThan(0)
+  })
+
+  it('round-trips sparse output blocks through the current projection checkpoint schema', async () => {
+    const { ctx, session } = await harness()
+    session.append('step/start', { turn: 1, step: 1 })
+    session.append('assistant/chunk', {
+      turn: 1,
+      step: 1,
+      chunk: { type: 'text-delta', index: 2, text: 'abcd' },
+    })
+
+    const checkpoint = ctx.sessionProjections.checkpoint(session)
+    expect(ctx.sessionProjections.viewCheckpoint(checkpoint).liveTokenUsage).toMatchObject({
+      outputTokens: createDeepSeekTokenCounter().countText('abcd'),
+      estimated: true,
+    })
+  })
+
   it('does not invent a TPS interval from terminal duplicate events', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(1_000)
