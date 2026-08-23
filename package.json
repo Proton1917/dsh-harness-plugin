@@ -18,5 +18,8 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Proton1917/dsh-harness-plugin.git"
+  },
+  "devDependencies": {
+    "@deepseek-ai/dsh": "0.1.1-rc.2"
   }
 }

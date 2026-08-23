@@ -41,7 +41,7 @@ This open-source repository owns independently installable DeepSeek Harness plug
 - Install and remove the fifth mode with `pnpm run medical:preset:install` and `pnpm run medical:preset:remove`. The scripts may update or delete only a directory carrying their management marker; an unmanaged same-name preset is never overwritten or removed.
 - QQ Bot lives in the separate `~/.dsh/profiles/qqbot` profile. Never commit its AppID, AppSecret, generated patch, or other credentials here.
 - Treat upstream brand-slot changes as compatibility work. The plugin targets only the current `sidebar.brand.mark` and `sidebar.brand.name` declarations and does not preserve obsolete DOM selectors.
-- All package manifests target DSH `0.1.1-rc.1`. Live projections use `stateSchema` plus an explicit Client `wire`; never restore the pre-`0.1.1` top-level `schema` / `view` registration because the current registry treats it as Host-only.
+- The private workspace compatibility assembly and every exact dev dependency target DSH `0.1.1-rc.2`; package peer ranges cover the `0.1.1` prerelease line. Live projections use `stateSchema` plus an explicit Client `wire`; never restore the pre-`0.1.1` top-level `schema` / `view` registration because the current registry treats it as Host-only.
 
 ## Development and delivery
 
