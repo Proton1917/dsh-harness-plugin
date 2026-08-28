@@ -31,6 +31,9 @@ export default defineConfig([
         '@deepseek-ai/dsh-client-runtime',
         '@deepseek-ai/dsh-client-runtime/client',
         '@deepseek-ai/dsh-client-ui-sidebar',
+        '@deepseek-ai/dsh-client-ui-sidebar/client',
+        'react',
+        'react/jsx-runtime',
       ],
     },
     outputOptions: {

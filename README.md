@@ -58,7 +58,7 @@ git diff --check
 
 ## 兼容性边界
 
-官方侧栏当前没有品牌子插槽，因此品牌模块以 `BrandWordmark` 的原生 SVG `viewBox="0 0 182 24"` 和收起态 `FishLogo` 的 `viewBox="0 0 23.16 17.04"` 作为挂载点。Harness 更新不会覆盖本仓库；如果上游替换任一标识，对应处理会安全地不显示，需要同步更新识别特征。
+插件支持 DSH `0.1.0-rc.8`，并通过正式的 `sidebar.brand.mark` 和 `sidebar.brand.name` 插槽装入人物标识与 `deepseek HARNESS` 字标。插件不保留旧版 DOM 选择器；上游修改品牌插槽时需要同步更新插件。
 
 ## 许可证与公开分发
 
