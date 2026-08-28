@@ -1,45 +1,101 @@
-# DSH Harness Plugin
+# DSH Community Plugins
 
-一个完整的 DeepSeek Harness 插件：同一个 Host 插件注册实时 token projection，同一个 Client 入口提供实时统计、蓝天花束背景和 DeepSeek 品牌角色卡。Harness profile 只挂载一个 package 和一个 bundle 条目。
+English | [中文](README.zh.md)
 
-## 功能
+[![CI](https://github.com/Proton1917/dsh-harness-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/Proton1917/dsh-harness-plugin/actions/workflows/ci.yml)
 
-- **实时统计**：以 DeepSeek tokenizer 估算进行中的输入、输出与总 token；最终 provider usage 替换同一步估算；独立 TPS 行只使用真实流式输出增量及到达时间。
-- **背景主题**：904 × 1200、约 170 KB 的蓝天花束 WebP 内联进入 Client bundle；模糊满幅环境层、完整清晰人像层和明暗遮罩层共同构成背景。清晰层以对话滚动区的实时矩形为坐标系，侧栏、详情栏和窗口尺寸变化时自动重新居中。主题 token 将画布、侧栏、输入框、菜单和气泡变成可读的玻璃层。
-- **品牌角色**：官方 DeepSeek 鲸鱼和字标保持不变，原 `HARNESS` 小牌替换为最大 84 × 84 的大图标；展开侧栏的品牌行随之增高，折叠侧栏仍恢复紧凑控制栏。图标底部继续显示 `HARNESS`，品牌按钮的“新建会话”行为和无障碍标签不变。
+This public repository contains four independently installable plugins for DeepSeek Harness. Each package owns one `dsh.bundle` layer and can be installed, removed, or upgraded without changing the Harness source tree. This is a third-party community project and is not an official DeepSeek product or endorsement.
 
-图片以内联 data URL 打包，不需要额外静态路由。明暗模式、高对比度和减少动态效果偏好均有独立样式。所有 DOM、observer、主题 token 和字典注册都由 Cordis effect disposer 撤回，HMR 不会叠加副本。
+## Plugins
 
-## 安装到 Harness profile
+| Package | What it adds |
+|---|---|
+| `@proton1917/dsh-live-stats` | Live input, output, total-token, cache, latency, and streaming-throughput statistics |
+| `@proton1917/dsh-web-background` | A conversation-aligned background and semantic glass-theme overrides |
+| `@proton1917/dsh-brand-mascot` | Optional sidebar mascot, brand treatment, and agent persona |
+| `@proton1917/dsh-medical` | A disabled-by-default medical case desk and a toolless Medical Agent Preset |
+
+The packages do not import source or mutable runtime state from one another. Removing one package retracts only the Cordis registrations, DOM, styles, projections, commands, or slots that it owns.
+
+## Install the release packages
+
+The `v0.1.0` release targets the registry-installable DSH `0.1.1-rc.2` line. Install one or more prebuilt tarballs directly into the Web Profile:
 
 ```sh
-dsh plugin --profile web add .
+dsh plugin --profile web add https://github.com/Proton1917/dsh-harness-plugin/releases/download/v0.1.0/proton1917-dsh-live-stats-0.1.0.tgz
+dsh plugin --profile web add https://github.com/Proton1917/dsh-harness-plugin/releases/download/v0.1.0/proton1917-dsh-web-background-0.1.0.tgz
+dsh plugin --profile web add https://github.com/Proton1917/dsh-harness-plugin/releases/download/v0.1.0/proton1917-dsh-brand-mascot-0.1.0.tgz
+dsh plugin --profile web add https://github.com/Proton1917/dsh-harness-plugin/releases/download/v0.1.0/proton1917-dsh-medical-0.1.0.tgz
 ```
 
-`dsh.bundle.patch` 只插入一个 `harness-plugin` 条目。当前 Client 功能在 Web profile 呈现，Host projection 与整个 Harness session 日志协同。正常运行：
+Restart `dsh web` after changing Profile Bundle membership. Inspect the composed layers without starting the server:
 
 ```sh
-dsh web
+dsh --profile web --dump-config
 ```
 
-## 开发验证
+### Enable the Medical Agent Preset
+
+The medical package ships a separate preset installer because user Agent Presets live outside Profile dependencies. Install the package first, then run:
+
+```sh
+pnpm --dir "${DSH_HOME:-$HOME/.dsh}/profiles/web" exec dsh-medical-preset install
+```
+
+Open Settings → General, configure an exact Provider ID, Model ID, and reasoning effort available in the DSH model selector, then enable Medical case analysis. `cc-api / claude-fable-5 / high` is the route validated by this repository; the plugin accepts another configured DSH route and does not require Fable.
+
+Before removing the medical package, remove its managed preset:
+
+```sh
+pnpm --dir "${DSH_HOME:-$HOME/.dsh}/profiles/web" exec dsh-medical-preset remove
+dsh plugin --profile web remove @proton1917/dsh-medical
+```
+
+The installer updates or removes only a directory carrying its management marker. It refuses to overwrite or delete an unmanaged `medical` preset.
+
+## Install from a checkout
+
+Clone the repository and install the package directories you want:
+
+```sh
+git clone https://github.com/Proton1917/dsh-harness-plugin.git
+cd dsh-harness-plugin
+pnpm install
+pnpm run build
+dsh plugin --profile web add ./packages/live-stats
+dsh plugin --profile web add ./packages/web-background
+dsh plugin --profile web add ./packages/brand-mascot
+dsh plugin --profile web add ./packages/medical
+pnpm run medical:preset:install
+```
+
+The workspace root is not a DSH Bundle and cannot be installed as a fifth package.
+
+## Medical data and output boundaries
+
+Medical analysis is off after installation. Structured cases use a fresh standard Session, a deterministic title, one admitted model request, the standard Session Log, and no model-callable tools. Medical-mode conversations retain their history and configured route across turns while continuing to expose no tools.
+
+De-identify every case before submission. Do not enter names, identity numbers, phone numbers, addresses, hospital numbers, or other direct identifiers. Users remain responsible for organizational policy, patient authorization, provider data terms, and applicable law.
+
+The output supports medical education, research, and clinician-reviewed decision support. Urgent findings require direct clinical assessment. The model must mark missing facts, avoid invented case details, and avoid claiming current guideline or literature retrieval that did not occur.
+
+## Compatibility
+
+Release `v0.1.0` is built and verified against DSH `0.1.1-rc.2`, which is the version currently available through npm. DSH `0.1.2-alpha.1` reorganizes the Client packages but does not yet publish those new package versions to npm, so this release does not claim alpha.1 source-checkout compatibility.
+
+## Development
 
 ```sh
 pnpm install
 pnpm run ci
-pnpm pack --dry-run
+pnpm run pack:check
+git diff --check
 ```
 
-已安装的 link bundle 始终指向本目录。修改后运行 `pnpm run build`；已有插件条目可由 DSH Client HMR 重载，package 首次加入或名称变化需要重启一次服务。
+`pnpm run ci` runs package type checks, unit tests, and builds. `pnpm run pack:check` inspects the files shipped by every tarball. User-visible changes also require validation in the real Harness Web application.
 
-## 兼容性边界
+## Brand and licenses
 
-官方侧栏当前没有品牌子插槽，因此品牌模块以 `BrandWordmark` 的原生 SVG `viewBox="0 0 182 24"` 作为挂载点。Harness 更新不会覆盖本仓库；如果上游彻底替换这枚字标，角色卡会安全地不显示，需要同步更新识别特征。
+The source is distributed under BSD-3-Clause. Tokenizer provenance is recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Image permissions and limitations are recorded in [ASSET_NOTICE.md](ASSET_NOTICE.md) and the package-level notices.
 
-## 许可证与公开分发
-
-仓库源码采用 [BSD-3-Clause](LICENSE)。`package.json` 保留 `"private": true`，仅用于阻止意外发布到 npm registry，不限制 GitHub 上的源码使用和再分发。
-
-`src/assets/background.webp` 和 `src/assets/mascot.webp` 是仓库所有者授权随本仓库公开发布的图片衍生文件，并按 BSD-3-Clause 分发；该授权不授予任何第三方商标、角色或原始作品中超出仓库所有者控制范围的权利。详见 [ASSET_NOTICE.md](ASSET_NOTICE.md)。
-
-`assets/deepseek-v3/` 中 tokenizer 的来源、校验和与随附 MIT 许可证见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+“DeepSeek Harness” identifies compatibility with the upstream project. The name and official brand materials remain subject to the upstream [brand guidelines](https://github.com/deepseek-ai/deepseek-harness/blob/master/BRAND_GUIDELINES.md). This repository does not claim official sponsorship, partnership, or endorsement.
