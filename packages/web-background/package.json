@@ -1,8 +1,8 @@
 {
   "name": "@proton1917/dsh-web-background",
   "version": "0.1.0",
-  "description": "DeepSeek Harness Web background and semantic glass theme",
-  "private": true,
+  "description": "Third-party DSH Web background and semantic glass theme",
+  "private": false,
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
@@ -42,6 +42,20 @@
     "url": "git+https://github.com/Proton1917/dsh-harness-plugin.git",
     "directory": "packages/web-background"
   },
+  "homepage": "https://github.com/Proton1917/dsh-harness-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/Proton1917/dsh-harness-plugin/issues"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "theme",
+    "background",
+    "typescript"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
     "@deepseek-ai/dsh-client-runtime": "^0.1.1-rc.1",
@@ -63,6 +77,7 @@
     "lib/types/**/*.d.ts",
     "src/assets/background.webp",
     "ASSET_NOTICE.md",
+    "LICENSE",
     "README.md"
   ]
 }

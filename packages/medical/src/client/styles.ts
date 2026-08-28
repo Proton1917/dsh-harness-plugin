@@ -70,6 +70,40 @@ export const MEDICAL_STYLES = `
   font: var(--dsw-font-s-14);
 }
 .dsh-medical-settings-route { font-family: var(--dsw-font-mono); font-size: 11px; }
+.dsh-medical-settings-route-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dsh-medical-route-edit,
+.dsh-medical-route-actions button {
+  border: 1px solid var(--dsw-alias-border-subtle);
+  border-radius: 8px;
+  color: var(--dsw-alias-label-secondary);
+  background: var(--dsw-alias-bg-layer-2);
+  cursor: pointer;
+  font: var(--dsw-font-s-14);
+}
+.dsh-medical-route-edit { margin-top: 4px; padding: 3px 8px; font-size: 11px; }
+.dsh-medical-route-editor { display: grid; gap: 8px; margin-top: 10px; }
+.dsh-medical-route-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.dsh-medical-route-fields label { display: grid; gap: 4px; color: var(--dsw-alias-label-secondary); font-size: 11px; }
+.dsh-medical-route-fields input {
+  min-width: 0;
+  padding: 7px 8px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 8px;
+  color: var(--dsw-alias-label-primary);
+  background: var(--dsw-specific-input-major);
+  font-family: var(--dsw-font-mono);
+  font-size: 11px;
+}
+.dsh-medical-route-help { color: var(--dsw-alias-label-tertiary); font-size: 11px; }
+.dsh-medical-route-error { color: var(--dsw-alias-state-error-primary); font-size: 11px; }
+.dsh-medical-route-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.dsh-medical-route-actions button { padding: 5px 10px; }
+.dsh-medical-route-actions button:disabled { cursor: not-allowed; opacity: .48; }
 .dsh-medical-switch {
   position: relative;
   flex: none;

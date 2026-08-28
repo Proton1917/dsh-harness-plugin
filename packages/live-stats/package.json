@@ -1,8 +1,8 @@
 {
   "name": "@proton1917/dsh-live-stats",
   "version": "0.1.0",
-  "description": "DeepSeek Harness live token, cache, latency, and throughput statistics",
-  "private": true,
+  "description": "DSH live token, cache, latency, and streaming-throughput statistics",
+  "private": false,
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
@@ -42,6 +42,20 @@
     "type": "git",
     "url": "git+https://github.com/Proton1917/dsh-harness-plugin.git",
     "directory": "packages/live-stats"
+  },
+  "homepage": "https://github.com/Proton1917/dsh-harness-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/Proton1917/dsh-harness-plugin/issues"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "live-tokens",
+    "tps",
+    "typescript"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
@@ -92,6 +106,7 @@
     "lib/client.js",
     "lib/types/**/*.d.ts",
     "README.md",
+    "LICENSE",
     "THIRD_PARTY_NOTICES.md"
   ]
 }

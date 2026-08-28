@@ -45,6 +45,8 @@ This open-source repository owns independently installable DeepSeek Harness plug
 
 ## Development and delivery
 
+- Community releases require the `dsh-plugin` GitHub topic, a current default branch, one tested external install command per package, package-local license material, and immutable GitHub Release assets. Keep the workspace root private; each `packages/*` manifest is independently publishable.
+- Release compatibility names the newest DSH version that public package managers can install and that this repository has verified. A newer Harness source tag does not widen the claim until its external package dependencies are available and the plugins are rebuilt against them.
 - Inspect `git status`, the active branch, and the relevant package source and tests before editing. Preserve unrelated user changes.
 - Run `pnpm run ci`, `pnpm run pack:check`, and `git diff --check` after source, manifest, or asset changes. Asset-only changes still require a rebuild because images are inlined into each owning package's `lib/client.js`.
 - Validate user-visible changes in the real Harness Web application. Check expanded and collapsed sidebars, background alignment, live statistics, the medical enable switch and case desk, four independently installed personal bundles, and absence of duplicate plugin DOM.

@@ -1,8 +1,8 @@
 {
   "name": "@proton1917/dsh-medical",
   "version": "0.1.0",
-  "description": "DeepSeek Harness structured medical cases and a direct-submission Fable Agent Preset",
-  "private": true,
+  "description": "DSH structured medical cases and a configurable toolless Medical Agent Preset",
+  "private": false,
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
@@ -20,6 +20,9 @@
       "default": "./lib/client.js"
     },
     "./package.json": "./package.json"
+  },
+  "bin": {
+    "dsh-medical-preset": "./scripts/install-preset.mjs"
   },
   "dsh": {
     "bundle": {
@@ -51,6 +54,21 @@
     "type": "git",
     "url": "git+https://github.com/Proton1917/dsh-harness-plugin.git",
     "directory": "packages/medical"
+  },
+  "homepage": "https://github.com/Proton1917/dsh-harness-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/Proton1917/dsh-harness-plugin/issues"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "medical",
+    "clinical-reasoning",
+    "agent-preset",
+    "typescript"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
@@ -111,6 +129,7 @@
     "scripts/install-preset.mjs",
     "lib/*.js",
     "lib/types/**/*.d.ts",
+    "LICENSE",
     "README.md"
   ]
 }

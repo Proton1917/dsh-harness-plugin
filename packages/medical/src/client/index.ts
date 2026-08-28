@@ -8,7 +8,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-model-selection/client'
 import type { MedicalSettings } from '../types.ts'
 import { medicalModelSelection, MedicalClientController, type MedicalClientContext } from './controller.ts'
 import { MedicalLauncher } from './MedicalLauncher.tsx'
-import { MedicalSettingsRow } from './MedicalSettingsRow.tsx'
+import { MedicalSettingsRow, type MedicalRouteSettings } from './MedicalSettingsRow.tsx'
 import { en, MEDICAL_LOCALE_NAMESPACE, zh } from './locales.ts'
 import { waitForMedicalSettings } from './settings.ts'
 import { installMedicalStyles } from './styles.ts'
@@ -42,6 +42,11 @@ export function apply(ctx: ClientContext): void {
   const injected = () => ({
     settings,
     setEnabled: (enabled: boolean) => settings.set('enabled', enabled),
+    setRoute: async (route: MedicalRouteSettings) => {
+      await settings.set('provider', route.provider)
+      await settings.set('model', route.model)
+      await settings.set('reasoningEffort', route.reasoningEffort)
+    },
     submitCase: async (
       input: Parameters<MedicalClientController['submitCase']>[0],
       images: Parameters<MedicalClientController['submitCase']>[1],

@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { access, copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
@@ -13,6 +15,11 @@ const dshHomeInput = configuredHome === undefined || configuredHome === ''
 const dshHome = resolve(dshHomeInput)
 const target = join(dshHome, '.agent-presets', 'medical')
 const marker = join(target, MARKER)
+const action = process.argv[2] ?? 'install'
+
+if (!['install', 'remove', '--remove'].includes(action)) {
+  throw new Error('Usage: dsh-medical-preset [install|remove]')
+}
 
 async function exists(path) {
   try {
@@ -23,7 +30,7 @@ async function exists(path) {
   }
 }
 
-if (process.argv.includes('--remove')) {
+if (action === 'remove' || action === '--remove') {
   if (!await exists(target)) {
     process.stdout.write(`Medical Agent Preset is already absent: ${target}\n`)
     process.exit(0)

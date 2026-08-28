@@ -1,8 +1,8 @@
 {
   "name": "@proton1917/dsh-brand-mascot",
   "version": "0.1.0",
-  "description": "DeepSeek Harness sidebar brand mascot card and whale-girl persona",
-  "private": true,
+  "description": "Third-party DSH sidebar mascot and optional agent persona",
+  "private": false,
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
@@ -42,6 +42,20 @@
     "url": "git+https://github.com/Proton1917/dsh-harness-plugin.git",
     "directory": "packages/brand-mascot"
   },
+  "homepage": "https://github.com/Proton1917/dsh-harness-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/Proton1917/dsh-harness-plugin/issues"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "mascot",
+    "persona",
+    "typescript"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
     "@deepseek-ai/dsh-agent": "^0.1.1-rc.1",
@@ -72,6 +86,7 @@
     "lib/types/**/*.d.ts",
     "src/assets/mascot.webp",
     "ASSET_NOTICE.md",
+    "LICENSE",
     "README.md"
   ]
 }

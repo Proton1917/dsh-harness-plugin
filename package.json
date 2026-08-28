@@ -10,6 +10,7 @@
     "medical:preset:install": "pnpm --filter @proton1917/dsh-medical run install:preset",
     "medical:preset:remove": "pnpm --filter @proton1917/dsh-medical run remove:preset",
     "pack:check": "pnpm --filter @proton1917/dsh-live-stats pack --dry-run && pnpm --filter @proton1917/dsh-web-background pack --dry-run && pnpm --filter @proton1917/dsh-brand-mascot pack --dry-run && pnpm --filter @proton1917/dsh-medical pack --dry-run",
+    "pack:release": "pnpm --filter @proton1917/dsh-live-stats pack --pack-destination ./dist && pnpm --filter @proton1917/dsh-web-background pack --pack-destination ./dist && pnpm --filter @proton1917/dsh-brand-mascot pack --pack-destination ./dist && pnpm --filter @proton1917/dsh-medical pack --pack-destination ./dist",
     "test": "pnpm --recursive --filter './packages/*' run test",
     "typecheck": "pnpm --recursive --filter './packages/*' run typecheck"
   },

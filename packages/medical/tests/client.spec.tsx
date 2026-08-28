@@ -71,10 +71,31 @@ describe('medical settings and case desk', () => {
 
   it('renders the exact route and persists the enable switch', async () => {
     const setEnabled = vi.fn(async () => {})
-    render(<MedicalSettingsRow settings={settingsScope(false)} setEnabled={setEnabled} t={t} />)
+    const setRoute = vi.fn(async () => {})
+    render(
+      <MedicalSettingsRow
+        settings={settingsScope(false)}
+        setEnabled={setEnabled}
+        setRoute={setRoute}
+        t={t}
+      />,
+    )
     expect(screen.getByText('cc-api / claude-fable-5 / high')).toBeTruthy()
     fireEvent.click(screen.getByRole('switch'))
     await waitFor(() => { expect(setEnabled).toHaveBeenCalledWith(true) })
+
+    fireEvent.click(screen.getByRole('button', { name: '配置路由' }))
+    fireEvent.change(screen.getByLabelText('Provider ID'), { target: { value: 'deepseek-official' } })
+    fireEvent.change(screen.getByLabelText('Model ID'), { target: { value: 'deepseek-v4-pro' } })
+    fireEvent.change(screen.getByLabelText('推理强度'), { target: { value: 'medium' } })
+    fireEvent.click(screen.getByRole('button', { name: '保存' }))
+    await waitFor(() => {
+      expect(setRoute).toHaveBeenCalledWith({
+        provider: 'deepseek-official',
+        model: 'deepseek-v4-pro',
+        reasoningEffort: 'medium',
+      })
+    })
   })
 
   it('opens the de-identification desk and validates required case fields', () => {
