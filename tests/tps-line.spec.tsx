@@ -97,40 +97,57 @@ describe('plugin-owned statistics row', () => {
   })
 
   it('shadows the built-in stats cell through the documented slot priority', () => {
-    document.body.innerHTML = `
-      <div id="root"></div>
-      <button aria-label="New Session"><svg viewBox="0 0 182 24"></svg></button>
-    `
+    document.body.innerHTML = '<div id="root"></div>'
     const register = vi.fn(() => () => {})
     const registerLocale = vi.fn(() => () => {})
     const overrideTokens = vi.fn(() => () => {})
     const effects: Array<() => void> = []
+    const runInstall = (install: () => unknown): (() => void) => {
+      const installed = install()
+      if (typeof installed === 'function') return installed as () => void
+      if (installed !== null && typeof installed === 'object' && Symbol.iterator in installed) {
+        const disposers = [...installed as Iterable<() => void>]
+        return () => { for (const dispose of disposers.reverse()) dispose() }
+      }
+      return () => undefined
+    }
     const ctx = {
       effect: (factory: () => () => void) => {
         effects.push(factory())
       },
       locale: { register: registerLocale },
-      slots: { register },
+      slots: {
+        inject: (_name: string, install: () => unknown) => runInstall(install),
+        register,
+      },
       theme: { overrideTokens },
     } as unknown as ClientContext
     apply(ctx)
     expect(overrideTokens).toHaveBeenCalledOnce()
     expect(document.querySelectorAll('[data-dsh-web-background]')).toHaveLength(1)
-    expect(document.querySelectorAll('button[data-dsh-brand-mascot]')).toHaveLength(1)
+    expect(document.querySelectorAll('[data-dsh-brand-mascot-style]')).toHaveLength(1)
     expect(registerLocale).toHaveBeenCalledWith(LIVE_STATS_NS, expect.any(Object))
-    expect(register.mock.calls[0]?.[0]).toMatchObject({
+    expect(register.mock.calls.map(call => call[0])).toContainEqual(expect.objectContaining({
+      name: 'sidebar.brand.mark',
+      priority: -1,
+    }))
+    expect(register.mock.calls.map(call => call[0])).toContainEqual(expect.objectContaining({
+      name: 'sidebar.brand.name',
+      priority: -1,
+    }))
+    expect(register.mock.calls.map(call => call[0])).toContainEqual(expect.objectContaining({
       name: 'conversation.composer.dock',
       id: 'stats',
       order: 0,
       priority: -1,
       locale: LIVE_STATS_NS,
-    })
-    expect(register.mock.calls[1]?.[0]).toMatchObject({
+    }))
+    expect(register.mock.calls.map(call => call[0])).toContainEqual(expect.objectContaining({
       name: 'conversation.composer.dock',
       id: 'live-tps',
       order: 1,
       locale: LIVE_STATS_NS,
-    })
+    }))
     for (const dispose of effects.reverse()) dispose()
   })
 })

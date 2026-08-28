@@ -6,7 +6,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-theme/client'
 import type {} from '@deepseek-ai/dsh-session-stats/client'
 import type {} from '../types.ts'
 import { installBackground } from './background.ts'
-import { installBrandMascot } from './brand-mascot.ts'
+import { installBrandSlots, installBrandStyles } from './brand-mascot.ts'
 import { LiveStatsLine } from './LiveStatsLine.tsx'
 import { en, LIVE_STATS_NS, zh } from './locales.ts'
 import { TpsLine } from './TpsLine.tsx'
@@ -23,7 +23,8 @@ export const inject = ['slots', 'conversation', 'locale', 'theme']
 /** Install live statistics and the personal Client interface modules. */
 export function apply(ctx: ClientContext): void {
   installBackground(ctx)
-  installBrandMascot(ctx)
+  installBrandStyles(ctx)
+  installBrandSlots(ctx)
   ctx.effect(
     () => ctx.locale.register(LIVE_STATS_NS, { zh, en }),
     'live-stats: dictionaries',
