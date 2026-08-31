@@ -1,6 +1,6 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
-import type {} from '@deepseek-ai/dsh-agent-presets'
+import type { AgentPresets } from '@deepseek-ai/dsh-agent-presets'
 import { PERSONA_SECTION } from '@deepseek-ai/dsh-system-prompt'
 
 /** Services required by the model-facing brand persona. */
@@ -29,9 +29,12 @@ export const MINIMAL_WHALE_PERSONA = `You are a helpful software engineer assist
 export class WhalePersonaCoordinator {
   private readonly minimal = new Map<Agent, () => void>()
 
+  /** @param agentPresets - roster service injected into the owning plugin context. */
+  constructor(private readonly agentPresets: Pick<AgentPresets, 'composedPreset'>) {}
+
   /** Install or retract the exact-Agent Minimal persona after preset changes. */
   sync(agent: Agent): void {
-    if (agent.ctx.agentPresets.composedPreset(agent.ctx) !== 'minimal') {
+    if (this.agentPresets.composedPreset(agent.ctx) !== 'minimal') {
       this.disposeAgent(agent)
       return
     }
@@ -67,7 +70,7 @@ export function apply(ctx: Context): void {
     }),
     'brand-mascot: whale-girl persona',
   )
-  const coordinator = new WhalePersonaCoordinator()
+  const coordinator = new WhalePersonaCoordinator(ctx.agentPresets)
   ctx.on('agent/created', ({ agent }) => { coordinator.sync(agent) })
   ctx.on('agent-preset/selected', (sessionId) => {
     const agent = ctx.agents.get(sessionId)

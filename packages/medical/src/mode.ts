@@ -1,5 +1,5 @@
 import type { Agent } from '@deepseek-ai/dsh-agent'
-import type {} from '@deepseek-ai/dsh-agent-presets'
+import type { AgentPresets } from '@deepseek-ai/dsh-agent-presets'
 import { ReasoningEffortId, type LlmCallConfig, type Message } from '@deepseek-ai/dsh-llm'
 import type { SessionTitleService } from '@deepseek-ai/dsh-session-title'
 import { medicalSessionTitle } from './shared.ts'
@@ -18,8 +18,11 @@ export function medicalRouteConfig(settings: MedicalSettings): LlmCallConfig {
 }
 
 /** Whether an Agent currently runs the Medical Agent Preset. */
-export function isMedicalMode(agent: Agent): boolean {
-  return agent.ctx.agentPresets.composedPreset(agent.ctx) === MEDICAL_PRESET_ID
+export function isMedicalMode(
+  agent: Agent,
+  agentPresets: Pick<AgentPresets, 'composedPreset'>,
+): boolean {
+  return agentPresets.composedPreset(agent.ctx) === MEDICAL_PRESET_ID
 }
 
 function sameRoute(left: LlmCallConfig | undefined, right: LlmCallConfig): boolean {
@@ -35,12 +38,13 @@ export class MedicalModeCoordinator {
   /** @param currentSettings - latest persisted medical settings. */
   constructor(
     private readonly currentSettings: () => MedicalSettings,
+    private readonly agentPresets: Pick<AgentPresets, 'composedPreset'>,
     private readonly titles?: Pick<SessionTitleService, 'get' | 'rename'>,
   ) {}
 
   /** Pin the route and deterministic title before a Medical-mode step enters the log. */
   prepareStep(agent: Agent, messages: readonly Message[]): void {
-    if (!isMedicalMode(agent)) return
+    if (!isMedicalMode(agent, this.agentPresets)) return
     this.sync(agent)
     if (this.titles === undefined || this.titles.get(agent.session)?.source.kind === 'user') return
     const text: string[] = []
@@ -55,7 +59,7 @@ export class MedicalModeCoordinator {
 
   /** Apply or withdraw the durable request header after preset composition changes. */
   sync(agent: Agent): void {
-    if (!isMedicalMode(agent)) {
+    if (!isMedicalMode(agent, this.agentPresets)) {
       if (!this.original.has(agent)) return
       const restore = this.original.get(agent)
       this.original.delete(agent)
@@ -85,7 +89,7 @@ export class MedicalModeCoordinator {
   /** Route every user turn in Medical mode through the configured Fable route. */
   async routeRequest(agent: Agent, next: () => Promise<LlmCallConfig>): Promise<LlmCallConfig> {
     const resolved = await next()
-    if (!isMedicalMode(agent)) return resolved
+    if (!isMedicalMode(agent, this.agentPresets)) return resolved
     const settings = this.currentSettings()
     if (!settings.enabled) {
       throw new Error('医学模式当前已关闭，请在设置中启用“医学病例分析”。')

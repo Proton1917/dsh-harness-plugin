@@ -66,7 +66,11 @@ export function apply(ctx: Context, config: Config = DEFAULT_MEDICAL_SETTINGS): 
   })
 
   const coordinator = new MedicalTurnCoordinator(() => currentSettings())
-  const medicalMode = new MedicalModeCoordinator(() => currentSettings(), ctx.sessionTitle)
+  const medicalMode = new MedicalModeCoordinator(
+    () => currentSettings(),
+    ctx.agentPresets,
+    ctx.sessionTitle,
+  )
   ctx.commands.register(createMedicalCommand(() => currentSettings(), coordinator))
   ctx.on('agent/request', ({ agent }, next) => coordinator.routeRequest(agent, next))
   ctx.on('agent/request', ({ agent }, next) => medicalMode.routeRequest(agent, next))
