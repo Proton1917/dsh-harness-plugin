@@ -1,4 +1,4 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
 
 /** Isolated class-based stylesheet for the medical settings row and case desk. */
 export const MEDICAL_STYLES = `

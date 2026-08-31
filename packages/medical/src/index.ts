@@ -1,7 +1,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type z from 'schemastery'
 import schema from 'schemastery'
-import { installSettingsSection, settingsNamespace } from '@deepseek-ai/dsh-settings'
+import type {} from '@deepseek-ai/dsh-settings'
 import type {} from '@deepseek-ai/dsh-commands'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import type {} from '@deepseek-ai/dsh-tools'
@@ -41,7 +41,7 @@ export const Config: z<Config> = schema.object({
 })
 
 /** Services required by the Host command and one-turn scope. */
-export const inject = ['agents', 'commands', 'sessionTitle', 'systemPrompt', 'tools']
+export const inject = ['agents', 'agentPresets', 'commands', 'sessionTitle', 'systemPrompt', 'tools']
 
 /** Register medical settings, structured submissions, and Medical-mode routing. */
 export function apply(ctx: Context, config: Config = DEFAULT_MEDICAL_SETTINGS): void {
@@ -53,12 +53,8 @@ export function apply(ctx: Context, config: Config = DEFAULT_MEDICAL_SETTINGS): 
     armTimeoutMs: config.armTimeoutMs ?? DEFAULT_MEDICAL_SETTINGS.armTimeoutMs,
   })
   let currentSettings = (): MedicalSettings => entry
-  installSettingsSection(
-    ctx,
-    settingsNamespace(MEDICAL_SETTINGS_NAMESPACE),
-    Config,
-    entry,
-    {
+  ctx.inject(['settings'], (settingsCtx) => {
+    settingsCtx.settings.installSection(ctx, MEDICAL_SETTINGS_NAMESPACE, Config, entry, {
       setSource: (current) => { currentSettings = current },
       onChange: () => {},
       validate: (value) => {
@@ -66,8 +62,8 @@ export function apply(ctx: Context, config: Config = DEFAULT_MEDICAL_SETTINGS): 
         if (value.model.trim() === '') throw new Error('medical model must not be empty')
         if (value.reasoningEffort.trim() === '') throw new Error('medical reasoningEffort must not be empty')
       },
-    },
-  )
+    })
+  })
 
   const coordinator = new MedicalTurnCoordinator(() => currentSettings())
   const medicalMode = new MedicalModeCoordinator(() => currentSettings(), ctx.sessionTitle)

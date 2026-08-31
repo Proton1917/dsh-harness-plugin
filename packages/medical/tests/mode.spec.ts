@@ -19,7 +19,7 @@ interface ModeHarness {
 }
 
 function modeAgent(id: string): ModeHarness {
-  const events: Array<{ type: 'agent-preset/selected'; data: { agentPreset: string } }> = []
+  let preset = id
   let config: LlmCallConfig | undefined
   const append = vi.fn((type: string, data: { header?: { config: LlmCallConfig } }) => {
     if (type === 'request/header') config = data.header?.config
@@ -27,9 +27,11 @@ function modeAgent(id: string): ModeHarness {
   const agent = {
     id: 'medical-mode-test',
     options: { provider: 'deepseek-official', model: 'deepseek-v4-pro' },
+    ctx: {
+      agentPresets: { composedPreset: () => preset },
+    },
     session: {
       header: { id: 'medical-mode-test', version: 0, createdAt: 1, agentPreset: id },
-      events,
       requestHeader: () => config === undefined ? undefined : { config },
       append,
     },
@@ -37,7 +39,7 @@ function modeAgent(id: string): ModeHarness {
   return {
     agent,
     append,
-    select: (next) => { events.push({ type: 'agent-preset/selected', data: { agentPreset: next } }) },
+    select: (next) => { preset = next },
   }
 }
 

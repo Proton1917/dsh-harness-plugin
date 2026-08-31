@@ -1,5 +1,5 @@
 import type { Agent } from '@deepseek-ai/dsh-agent'
-import { resolveSessionPreset } from '@deepseek-ai/dsh-agent-presets'
+import type {} from '@deepseek-ai/dsh-agent-presets'
 import { ReasoningEffortId, type LlmCallConfig, type Message } from '@deepseek-ai/dsh-llm'
 import type { SessionTitleService } from '@deepseek-ai/dsh-session-title'
 import { medicalSessionTitle } from './shared.ts'
@@ -19,7 +19,7 @@ export function medicalRouteConfig(settings: MedicalSettings): LlmCallConfig {
 
 /** Whether an Agent currently runs the Medical Agent Preset. */
 export function isMedicalMode(agent: Agent): boolean {
-  return resolveSessionPreset(agent.session) === MEDICAL_PRESET_ID
+  return agent.ctx.agentPresets.composedPreset(agent.ctx) === MEDICAL_PRESET_ID
 }
 
 function sameRoute(left: LlmCallConfig | undefined, right: LlmCallConfig): boolean {

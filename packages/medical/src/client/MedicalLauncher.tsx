@@ -2,7 +2,7 @@ import {
   useEffect, useId, useRef, useState, type ChangeEvent, type FormEvent, type MouseEvent,
 } from 'react'
 import { createPortal } from 'react-dom'
-import type { SettingsScope } from '@deepseek-ai/dsh-client-runtime/client'
+import type { SettingsScope } from '@deepseek-ai/dsh-client-ui-settings/client'
 import type { PropsLocale, PropsRuntime, TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type { MedicalAnalysisMode, MedicalCaseInput, MedicalSettings } from '../types.ts'

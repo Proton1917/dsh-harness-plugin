@@ -1,4 +1,6 @@
-import type { SessionFace, SessionId, WorkspaceId } from '@deepseek-ai/dsh-client-runtime/client'
+import type { SessionFace } from '@deepseek-ai/dsh-api-session-controller/client'
+import type { WorkspaceId } from '@deepseek-ai/dsh-api-workspace-controller/client'
+import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
 import { describe, expect, it, vi } from 'vitest'
 import {
   createMedicalSubmitter, medicalCommandLine, medicalModelSelection, medicalPromptContent,

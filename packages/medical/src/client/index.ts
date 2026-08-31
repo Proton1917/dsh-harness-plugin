@@ -1,10 +1,12 @@
-import type { ClientContext, SessionId } from '@deepseek-ai/dsh-client-runtime/client'
-import type { ConnectionHandle } from '@deepseek-ai/dsh-client-connection/client'
-import type {} from '@deepseek-ai/dsh-client-connection/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
+import type {} from '@deepseek-ai/dsh-api-session-controller/client'
+import type {} from '@deepseek-ai/dsh-api-workspace-controller/client'
+import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type {} from '@deepseek-ai/dsh-client-ui-model-selection/client'
+import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type { MedicalSettings } from '../types.ts'
 import { medicalModelSelection, MedicalClientController, type MedicalClientContext } from './controller.ts'
 import { MedicalLauncher } from './MedicalLauncher.tsx'
@@ -38,7 +40,6 @@ export function apply(ctx: ClientContext): void {
   const settings = ctx.settingsScope.bind<MedicalSettings>({ namespace: 'medical' })
   const client = ctx as unknown as MedicalClientContext
   const controller = new MedicalClientController(client)
-  const connection = ctx.get('connection') as ConnectionHandle
   const injected = () => ({
     settings,
     setEnabled: (enabled: boolean) => settings.set('enabled', enabled),
@@ -74,9 +75,9 @@ export function apply(ctx: ClientContext): void {
         active.add(sessionId)
         void waitForMedicalSettings(settings).then(async (value) => {
           const selection = medicalModelSelection(value)
-          const response = await connection.api.sessions.selectModel({ sessionId, ...selection })
-          if (!response.result.ok) throw new Error(response.result.error.message)
-          await ctx.modelDirectories.directoryFor(sessionId).load()
+          const directory = ctx.modelDirectories.directoryFor(sessionId)
+          await directory.select(selection)
+          await directory.load()
         }).catch(() => {
           // A later session-list or settings update retries the official selection path.
           active.delete(sessionId)

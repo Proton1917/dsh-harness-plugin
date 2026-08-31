@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import type { UseProjection } from '@deepseek-ai/dsh-client-runtime/client'
+import type { UseProjection } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '../types.ts'
 import { LIVE_STATS_NS } from './locales.ts'

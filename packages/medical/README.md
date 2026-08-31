@@ -40,7 +40,7 @@ dsh plugin --profile web remove @proton1917/dsh-medical
 
 ## 结构化病例数据流
 
-1. Client 通过官方 `session.create` 创建全新 `standard` 会话；优先沿用当前会话所属 Workspace，其次使用最近 Workspace，没有 Workspace 时创建未分组会话。
+1. Client 通过官方 `session.create` 创建全新 `standard` 会话；优先沿用当前会话所属 Workspace，当前会话不属于 Workspace 时创建未分组会话，不再猜测其他最近使用的 Workspace。
 2. Client 在新会话执行 `/medical-analyze text|image`。命令 `recordInput: false`，病例内容不进入 command 参数或 command 记录；准入失败时不改标题，也不打开失败会话。
 3. 命令只为该 Agent 的下一条标准 Prompt 安装医学完整提示、关闭运行时上下文、隐藏并拒绝全部工具，并准备精确 Fable 路由。病例 Prompt 前发生任何 Agent Preset 切换都会撤销这份临时作用域。
 4. Client 在病例消息前写入 `医学病例 · <主诉摘要>` 确定性标题。标题写入失败则停止，不调用标题模型。

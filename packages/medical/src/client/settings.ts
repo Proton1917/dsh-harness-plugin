@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import type { SettingsScope, SettingsScopeSnapshot } from '@deepseek-ai/dsh-client-runtime/client'
+import type { SettingsScope, SettingsScopeSnapshot } from '@deepseek-ai/dsh-client-ui-settings/client'
 import type { MedicalSettings } from '../types.ts'
 
 /** Subscribe to one Host-backed medical settings scope. */

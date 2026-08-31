@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { apply, BACKGROUND_TOKENS, backgroundStyles } from '../src/client/index.ts'
 

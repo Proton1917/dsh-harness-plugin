@@ -81,7 +81,7 @@ workspace 根目录不是 DSH Bundle，不能作为第五个包安装。
 
 ## 兼容性
 
-`v0.1.0` 在 DSH `0.1.1-rc.2` 上构建并完成验证，该版本也是 npm 当前提供的最新版。DSH `0.1.2-alpha.1` 已重组 Client 包，但对应的新包版本还未发布到 npm，因此本次发布不声明兼容 alpha.1 源码 checkout。
+不可变的 `v0.1.0` 发布资产仍面向 DSH `0.1.1-rc.2` 构建并完成验证。当前 `main` 源码面向 DSH `0.1.2-alpha.2`：开发依赖固定使用 npm 的 `alpha` 包，Client 实现已迁移到 `0.1.2` 拆分后的 Session Controller、Workspace Controller、Settings 和 renderer API。rc.2 请继续使用正式发布 tarball；新的发布声明兼容前，当前源码只与 alpha.2 搭配安装。
 
 ## 开发
 

@@ -28,8 +28,6 @@ export default defineConfig([
     deps: {
       neverBundle: [
         '@deepseek-ai/cordis',
-        '@deepseek-ai/dsh-client-runtime',
-        '@deepseek-ai/dsh-client-runtime/client',
         '@deepseek-ai/dsh-client-ui-theme',
         '@deepseek-ai/dsh-client-ui-theme/client',
       ],

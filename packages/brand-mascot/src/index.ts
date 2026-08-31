@@ -1,10 +1,10 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
-import { resolveSessionPreset } from '@deepseek-ai/dsh-agent-presets'
-import { PERSONA_ORDER, PERSONA_SECTION } from '@deepseek-ai/dsh-system-prompt'
+import type {} from '@deepseek-ai/dsh-agent-presets'
+import { PERSONA_SECTION } from '@deepseek-ai/dsh-system-prompt'
 
 /** Services required by the model-facing brand persona. */
-export const inject = ['agents', 'systemPrompt']
+export const inject = ['agents', 'agentPresets', 'systemPrompt']
 
 /** Compact whale-girl persona appended after each ordinary Agent Preset persona. */
 export const WHALE_PERSONA = `〖PERSONA_LOAD〗
@@ -31,14 +31,14 @@ export class WhalePersonaCoordinator {
 
   /** Install or retract the exact-Agent Minimal persona after preset changes. */
   sync(agent: Agent): void {
-    if (resolveSessionPreset(agent.session) !== 'minimal') {
+    if (agent.ctx.agentPresets.composedPreset(agent.ctx) !== 'minimal') {
       this.disposeAgent(agent)
       return
     }
     if (this.minimal.has(agent)) return
     this.minimal.set(agent, agent.ctx.systemPrompt.section({
       name: PERSONA_SECTION,
-      order: PERSONA_ORDER,
+      order: agent.ctx.systemPrompt.getSectionOrder('DEPLOYMENT_PERSONA'),
       text: MINIMAL_WHALE_PERSONA,
       complete: true,
     }))

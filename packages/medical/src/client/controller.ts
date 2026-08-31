@@ -1,7 +1,8 @@
-import type {
-  ClientContext, ISessions, IWorkspaces, SessionFace, SessionId, WorkspaceId,
-} from '@deepseek-ai/dsh-client-runtime/client'
-import type { ConnectionHandle, ModelSelection, PromptContentPart } from '@deepseek-ai/dsh-api-remotes/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
+import type { ModelSelection, PromptContentPart } from '@deepseek-ai/dsh-api-remotes/client'
+import type { ISessions, SessionFace } from '@deepseek-ai/dsh-api-session-controller/client'
+import type { IWorkspaces, WorkspaceId } from '@deepseek-ai/dsh-api-workspace-controller/client'
+import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
 import { medicalSessionTitle, renderMedicalCaseMessage } from '../shared.ts'
 import type { MedicalCaseInput, MedicalSettings } from '../types.ts'
 
@@ -117,7 +118,7 @@ function workspaceForNewCase(ctx: MedicalClientContext): WorkspaceId | undefined
     const owner = workspaces.items.find(workspace => workspace.sessionIds.includes(current))
     if (owner !== undefined) return owner.workspaceId
   }
-  return workspaces.recentWorkspaceId
+  return undefined
 }
 
 function waitForSession(ctx: MedicalClientContext, sessionId: SessionId): Promise<SessionFace> {
@@ -153,16 +154,15 @@ export class MedicalClientController {
 
   /** @param ctx - root Client context supplying the wire, sessions, and workspaces services. */
   constructor(private readonly ctx: MedicalClientContext) {
-    const connection = ctx.get('connection') as ConnectionHandle
     this.submit = createMedicalSubmitter({
       createSession: async (sessionId, workspaceId, agentPreset) => {
-        const response = await connection.api.sessions.create({
+        const response = await ctx.remote.session.create({
           sessionId,
           ...(workspaceId === undefined ? {} : { workspaceId }),
           agentPreset,
         })
-        if (!response.result.ok) {
-          throw new Error(`医学病例会话创建失败：${response.result.error.message}`)
+        if (!response.ok) {
+          throw new Error(`医学病例会话创建失败：${response.error.message}`)
         }
       },
       waitForSession: sessionId => waitForSession(ctx, sessionId),
