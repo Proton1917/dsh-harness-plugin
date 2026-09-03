@@ -81,7 +81,7 @@ The output supports medical education, research, and clinician-reviewed decision
 
 ## Compatibility
 
-The immutable `v0.1.0` release assets remain built and verified for DSH `0.1.1-rc.2`. The current `main` checkout targets DSH `0.1.2-alpha.2`: its exact development dependencies use the npm `alpha` packages and its Client code follows the split Session Controller, Workspace Controller, Settings, and renderer APIs introduced in the `0.1.2` line. Use the release tarballs with rc.2 and install from the current checkout only with alpha.2 until another release states otherwise.
+The immutable `v0.1.0` release assets remain built and verified for DSH `0.1.1-rc.2`. The current `main` checkout targets DSH `0.1.2-rc.1`: its exact development dependencies use the npm `next` packages and its Client code follows the split Session Controller, Workspace Controller, Settings, and renderer APIs introduced in the `0.1.2` line. Use the release tarballs with rc.2 and install from the current checkout only with rc.1 until another release states otherwise.
 
 ## Development
 

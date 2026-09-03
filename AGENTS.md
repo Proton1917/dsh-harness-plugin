@@ -43,7 +43,7 @@ This open-source repository owns independently installable DeepSeek Harness plug
 - Install and remove the fifth mode with `pnpm run medical:preset:install` and `pnpm run medical:preset:remove`. The scripts may update or delete only a directory carrying their management marker; an unmanaged same-name preset is never overwritten or removed.
 - QQ Bot lives in the separate `~/.dsh/profiles/qqbot` profile. Never commit its AppID, AppSecret, generated patch, or other credentials here.
 - Treat upstream brand-slot changes as compatibility work. The plugin targets only the current `sidebar.brand.mark` and `sidebar.brand.name` declarations and does not preserve obsolete DOM selectors.
-- The current source compatibility assembly and every exact dev dependency target DSH `0.1.2-alpha.2`; package peer ranges target the same alpha line. Client plugins use Cordis `Context` directly, Session and Workspace faces from their API Controller packages, settings scopes from `dsh-client-ui-settings`, and slot declarations from `dsh-client-ui-renderer`; never restore the removed aggregate `dsh-client-runtime`. Live projections keep `stateSchema` plus an explicit Client `wire`.
+- The current source compatibility assembly and every exact dev dependency target DSH `0.1.2-rc.1`; package peer ranges target the same rc line. Client plugins use Cordis `Context` directly, Session and Workspace faces from their API Controller packages, settings scopes from `dsh-client-ui-settings`, and slot declarations from `dsh-client-ui-renderer`; never restore the removed aggregate `dsh-client-runtime`. Live projections keep `stateSchema` plus an explicit Client `wire`.
 
 ## Development and delivery
 
