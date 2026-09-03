@@ -42,7 +42,7 @@ dsh --profile web --dump-config
 pnpm --dir "${DSH_HOME:-$HOME/.dsh}/profiles/web" exec dsh-medical-preset install
 ```
 
-打开设置 → 通用，填写 DSH 模型选择器中存在的 Provider ID、Model ID 和推理强度，再启用医学病例分析。仓库已验证 `cc-api / claude-fable-5 / high`；插件也接受其他已配置的 DSH 路由，Fable 不是运行前提。
+打开设置 → 通用，填写 DSH 模型选择器中存在的 Provider ID、Model ID 和推理强度，再启用医学病例分析。当前 `main` 源码默认使用已验证的 AI Code 路由 `cc-api / claude-fable-5-1 / high`；不可变的 `v0.1.0` 资产保留发布时的默认值。插件也接受其他已配置的 DSH 路由，Fable 不是运行前提。
 
 移除医学包前，先删除受管 Preset：
 
@@ -73,7 +73,7 @@ workspace 根目录不是 DSH Bundle，不能作为第五个包安装。
 
 ## 医学数据和输出边界
 
-医学分析安装后保持关闭。结构化病例会创建新的标准 Session，写入确定性标题，只准入一次模型请求，使用标准 Session Log，并向模型隐藏全部工具。医学模式在多轮对话中保留历史和已配置路由，同时继续保持无工具状态。
+医学分析安装后保持关闭。在当前 `main` 源码中，每个结构化病例都会创建新的医学模式 Session，写入确定性标题并使用标准 Session Log。完整医学提示、已配置路由和对话历史会在后续追问中保持稳定以复用缓存，同时继续向模型隐藏全部工具。
 
 病例提交前必须去标识化。请勿填写姓名、身份证号、电话、住址、住院号或其他直接身份标识。使用者需要确认组织政策、患者授权、模型服务商数据条款和适用法律。
 

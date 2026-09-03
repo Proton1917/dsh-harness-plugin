@@ -42,7 +42,7 @@ The medical package ships a separate preset installer because user Agent Presets
 pnpm --dir "${DSH_HOME:-$HOME/.dsh}/profiles/web" exec dsh-medical-preset install
 ```
 
-Open Settings → General, configure an exact Provider ID, Model ID, and reasoning effort available in the DSH model selector, then enable Medical case analysis. `cc-api / claude-fable-5 / high` is the route validated by this repository; the plugin accepts another configured DSH route and does not require Fable.
+Open Settings → General, configure an exact Provider ID, Model ID, and reasoning effort available in the DSH model selector, then enable Medical case analysis. The current `main` checkout defaults to the validated `cc-api / claude-fable-5-1 / high` AI Code route; immutable `v0.1.0` assets retain their published defaults. The plugin accepts another configured DSH route and does not require Fable.
 
 Before removing the medical package, remove its managed preset:
 
@@ -73,7 +73,7 @@ The workspace root is not a DSH Bundle and cannot be installed as a fifth packag
 
 ## Medical data and output boundaries
 
-Medical analysis is off after installation. Structured cases use a fresh standard Session, a deterministic title, one admitted model request, the standard Session Log, and no model-callable tools. Medical-mode conversations retain their history and configured route across turns while continuing to expose no tools.
+Medical analysis is off after installation. On the current `main` checkout, each structured case creates a fresh Medical-mode Session with a deterministic title and the standard Session Log. The same complete medical prompt, configured route, and history remain active for cache-friendly follow-up turns while no model-callable tools are exposed.
 
 De-identify every case before submission. Do not enter names, identity numbers, phone numbers, addresses, hospital numbers, or other direct identifiers. Users remain responsible for organizational policy, patient authorization, provider data terms, and applicable law.
 

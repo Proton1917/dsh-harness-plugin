@@ -3,7 +3,7 @@ import type { WorkspaceId } from '@deepseek-ai/dsh-api-workspace-controller/clie
 import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
 import { describe, expect, it, vi } from 'vitest'
 import {
-  createMedicalSubmitter, medicalCommandLine, medicalModelSelection, medicalPromptContent,
+  createMedicalSubmitter, medicalPromptContent,
 } from '../src/client/controller.ts'
 import type { MedicalCaseInput } from '../src/types.ts'
 
@@ -23,17 +23,7 @@ const input: MedicalCaseInput = {
 }
 
 describe('medical Client submission', () => {
-  it('projects the persisted route into the official model-selection value', () => {
-    expect(medicalModelSelection({
-      enabled: true,
-      provider: 'cc-api',
-      model: 'claude-fable-5',
-      reasoningEffort: 'high',
-      armTimeoutMs: 30_000,
-    })).toEqual({ provider: 'cc-api', model: 'claude-fable-5', reasoningEffort: 'high' })
-  })
-
-  it('creates, arms, titles, prompts, and opens one fresh session in order', async () => {
+  it('creates, titles, prompts, and opens one fresh Medical session in order', async () => {
     const order: string[] = []
     const createSession = vi.fn(async () => { order.push('create') })
     const rename = vi.fn(async () => {
@@ -52,12 +42,11 @@ describe('medical Client submission', () => {
         return session
       },
       openSession: () => { order.push('open') },
-      armSession: async () => { order.push('arm') },
     })
     const id = await submit(input, [], 'workspace-1' as WorkspaceId)
     expect(typeof id).toBe('string')
-    expect(order).toEqual(['create', 'wait', 'arm', 'rename', 'prompt', 'open'])
-    expect(createSession).toHaveBeenCalledWith(expect.any(String), 'workspace-1', 'standard')
+    expect(order).toEqual(['create', 'wait', 'rename', 'prompt', 'open'])
+    expect(createSession).toHaveBeenCalledWith(expect.any(String), 'workspace-1', 'medical')
     expect(rename).toHaveBeenCalledWith('医学病例 · 发热伴咳嗽 5 天')
     expect(prompt.mock.calls[0]?.[0][0]).toMatchObject({
       type: 'text', text: expect.stringContaining('# 医学病例分析请求'),
@@ -68,7 +57,6 @@ describe('medical Client submission', () => {
   it('does not open or prompt an admitted session whose deterministic rename failed', async () => {
     const openSession = vi.fn()
     const prompt = vi.fn()
-    const armSession = vi.fn()
     const session = {
       rename: vi.fn(async () => ({
         ok: false as const,
@@ -80,27 +68,8 @@ describe('medical Client submission', () => {
       createSession: async (_sessionId: SessionId) => {},
       waitForSession: async () => session,
       openSession,
-      armSession,
     })
     await expect(submit(input, [])).rejects.toThrow('会话命名失败')
-    expect(openSession).not.toHaveBeenCalled()
-    expect(armSession).toHaveBeenCalledOnce()
-    expect(prompt).not.toHaveBeenCalled()
-  })
-
-  it('does not rename, open, or prompt a session whose medical admission failed', async () => {
-    const rename = vi.fn()
-    const openSession = vi.fn()
-    const prompt = vi.fn()
-    const session = { rename, prompt } as unknown as SessionFace
-    const submit = createMedicalSubmitter({
-      createSession: async (_sessionId: SessionId) => {},
-      waitForSession: async () => session,
-      openSession,
-      armSession: async () => { throw new Error('admission failed') },
-    })
-    await expect(submit(input, [])).rejects.toThrow('admission failed')
-    expect(rename).not.toHaveBeenCalled()
     expect(openSession).not.toHaveBeenCalled()
     expect(prompt).not.toHaveBeenCalled()
   })
@@ -118,7 +87,6 @@ describe('medical Client submission', () => {
       createSession: async (_sessionId: SessionId) => {},
       waitForSession: async () => session,
       openSession,
-      armSession: async () => {},
     })
     await expect(submit(input, [])).rejects.toThrow('病例提交失败')
     expect(openSession).not.toHaveBeenCalled()
@@ -137,7 +105,5 @@ describe('medical Client submission', () => {
     expect(content[1]).toMatchObject({
       type: 'image', mediaType: 'image/png', name: 'ecg.png', data: 'AQIDBA==',
     })
-    expect(medicalCommandLine(false)).toBe('/medical-analyze text')
-    expect(medicalCommandLine(true)).toBe('/medical-analyze image')
   })
 })

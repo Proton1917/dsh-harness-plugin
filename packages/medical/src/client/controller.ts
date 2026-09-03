@@ -1,10 +1,10 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type { ModelSelection, PromptContentPart } from '@deepseek-ai/dsh-api-remotes/client'
+import type { PromptContentPart } from '@deepseek-ai/dsh-api-remotes/client'
 import type { ISessions, SessionFace } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { IWorkspaces, WorkspaceId } from '@deepseek-ai/dsh-api-workspace-controller/client'
 import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
 import { medicalSessionTitle, renderMedicalCaseMessage } from '../shared.ts'
-import type { MedicalCaseInput, MedicalSettings } from '../types.ts'
+import type { MedicalCaseInput } from '../types.ts'
 
 /** Browser compiler face for services whose Host and Client names intentionally coincide. */
 export type MedicalClientContext = Omit<ClientContext, 'sessions' | 'workspaces'> & {
@@ -12,7 +12,7 @@ export type MedicalClientContext = Omit<ClientContext, 'sessions' | 'workspaces'
   workspaces: IWorkspaces
 }
 
-/** Dependencies of the deterministic create → arm → rename → prompt → open sequence. */
+/** Dependencies of the deterministic create → rename → prompt → open sequence. */
 export interface MedicalSubmitDependencies {
   createSession: (
     sessionId: SessionId,
@@ -21,12 +21,6 @@ export interface MedicalSubmitDependencies {
   ) => Promise<void>
   waitForSession: (sessionId: SessionId) => Promise<SessionFace>
   openSession: (sessionId: SessionId) => void
-  armSession: (sessionId: SessionId, hasImages: boolean) => Promise<void>
-}
-
-/** Human command used only to arm the target Agent; case data stays out of command records. */
-export function medicalCommandLine(hasImages: boolean): string {
-  return `/medical-analyze ${hasImages ? 'image' : 'text'}`
 }
 
 /** Maximum images accepted in one case submission. */
@@ -34,15 +28,6 @@ export const MAX_MEDICAL_IMAGES = 8
 
 /** Maximum bytes accepted for one browser image before upload. */
 export const MAX_MEDICAL_IMAGE_BYTES = 10 * 1024 * 1024
-
-/** Project persisted medical settings into the official session model-selection value. */
-export function medicalModelSelection(settings: MedicalSettings): ModelSelection {
-  return {
-    provider: settings.provider,
-    model: settings.model,
-    reasoningEffort: settings.reasoningEffort as NonNullable<ModelSelection['reasoningEffort']>,
-  }
-}
 
 const MEDICAL_IMAGE_MEDIA_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'] as const
 type MedicalImageMediaType = typeof MEDICAL_IMAGE_MEDIA_TYPES[number]
@@ -96,9 +81,8 @@ export function createMedicalSubmitter(deps: MedicalSubmitDependencies) {
     workspaceId?: WorkspaceId,
   ): Promise<SessionId> => {
     const sessionId = crypto.randomUUID() as SessionId
-    await deps.createSession(sessionId, workspaceId, 'standard')
+    await deps.createSession(sessionId, workspaceId, 'medical')
     const session = await deps.waitForSession(sessionId)
-    await deps.armSession(sessionId, images.length > 0)
     const renamed = await session.rename(medicalSessionTitle(input.chiefComplaint))
     if (!renamed.ok) {
       throw new Error(`医学病例会话命名失败：${renamed.error.message}`)
@@ -167,18 +151,10 @@ export class MedicalClientController {
       },
       waitForSession: sessionId => waitForSession(ctx, sessionId),
       openSession: sessionId => { ctx.sessions.open(sessionId) },
-      armSession: async (sessionId, hasImages) => {
-        const result = await ctx.remote.commands.execute(sessionId, medicalCommandLine(hasImages), [])
-        if (!result.ok) throw new Error(`医学分析命令失败：${result.error.message}`)
-        if (result.value === undefined) throw new Error('医学分析命令未注册。')
-        if (result.value.result.kind === 'error') {
-          throw new Error(result.value.result.text)
-        }
-      },
     })
   }
 
-  /** Create, title, open, and submit one case to its own session. */
+  /** Create, title, open, and submit one case to its persistent Medical session. */
   submitCase(input: MedicalCaseInput, images: readonly File[]): Promise<SessionId> {
     return this.submit(input, images, workspaceForNewCase(this.ctx))
   }

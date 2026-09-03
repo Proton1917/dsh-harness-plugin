@@ -7,7 +7,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MedicalLauncher } from '../src/client/MedicalLauncher.tsx'
 import { MedicalSettingsRow } from '../src/client/MedicalSettingsRow.tsx'
 import { MEDICAL_LOCALE_NAMESPACE, zh } from '../src/client/locales.ts'
-import { waitForMedicalSettings } from '../src/client/settings.ts'
 import type { MedicalSettings } from '../src/types.ts'
 
 afterEach(cleanup)
@@ -26,9 +25,8 @@ function settingsScope(enabled: boolean): SettingsScope<MedicalSettings> {
     value: {
       enabled,
       provider: 'cc-api',
-      model: 'claude-fable-5',
+      model: 'claude-fable-5-1',
       reasoningEffort: 'high',
-      armTimeoutMs: 30_000,
     },
     base: undefined,
     user: undefined,
@@ -45,30 +43,6 @@ function settingsScope(enabled: boolean): SettingsScope<MedicalSettings> {
 }
 
 describe('medical settings and case desk', () => {
-  it('waits for a delayed Host settings snapshot used by Medical-mode selection', async () => {
-    let snapshot: SettingsScopeSnapshot<MedicalSettings> = {
-      status: 'loading', value: undefined, base: undefined, user: undefined,
-      revision: 0, writable: false, mode: 'host',
-    }
-    const listeners = new Set<() => void>()
-    const scope = {
-      getSnapshot: () => snapshot,
-      subscribe: (listener: () => void) => {
-        listeners.add(listener)
-        return () => { listeners.delete(listener) }
-      },
-      set: async () => {},
-      unset: async () => {},
-    } as SettingsScope<MedicalSettings>
-    const waiting = waitForMedicalSettings(scope)
-    snapshot = settingsScope(true).getSnapshot()
-    for (const listener of listeners) listener()
-    await expect(waiting).resolves.toMatchObject({
-      enabled: true, provider: 'cc-api', model: 'claude-fable-5', reasoningEffort: 'high',
-    })
-    expect(listeners.size).toBe(0)
-  })
-
   it('renders the exact route and persists the enable switch', async () => {
     const setEnabled = vi.fn(async () => {})
     const setRoute = vi.fn(async () => {})
@@ -80,7 +54,7 @@ describe('medical settings and case desk', () => {
         t={t}
       />,
     )
-    expect(screen.getByText('cc-api / claude-fable-5 / high')).toBeTruthy()
+    expect(screen.getByText('cc-api / claude-fable-5-1 / high')).toBeTruthy()
     fireEvent.click(screen.getByRole('switch'))
     await waitFor(() => { expect(setEnabled).toHaveBeenCalledWith(true) })
 
@@ -103,7 +77,8 @@ describe('medical settings and case desk', () => {
     fireEvent.click(screen.getByRole('button', { name: '打开医学病例分析' }))
     expect(screen.getByRole('dialog', { name: '临床推演室' })).toBeTruthy()
     expect(screen.getByText('提交前去标识化')).toBeTruthy()
-    expect(screen.getByText('cc-api / claude-fable-5 / high')).toBeTruthy()
+    expect(screen.getByText('cc-api / claude-fable-5-1 / high')).toBeTruthy()
+    expect(screen.getByText('固定医学路由 · 多轮复用缓存')).toBeTruthy()
     expect(screen.queryByText('快速投递')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: '创建病例会话并分析' }))
     expect(screen.getByRole('alert').textContent).toContain('主诉和现病史')

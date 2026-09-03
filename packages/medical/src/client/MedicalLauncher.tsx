@@ -220,7 +220,7 @@ function MedicalDialog({ settings, enabled, close, submitCase, t }: MedicalDialo
                   </span>
                 )}
                 <span className="dsh-medical-pill">{t('route.internal')}</span>
-                <span className="dsh-medical-pill">{t('route.single')}</span>
+                <span className="dsh-medical-pill">{t('route.multiturn')}</span>
               </div>
 
               <section className="dsh-medical-section">

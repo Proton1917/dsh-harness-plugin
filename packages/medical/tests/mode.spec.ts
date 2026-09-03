@@ -9,9 +9,8 @@ import type { MedicalSettings } from '../src/types.ts'
 const settings: MedicalSettings = {
   enabled: true,
   provider: 'cc-api',
-  model: 'claude-fable-5',
+  model: 'claude-fable-5-1',
   reasoningEffort: 'high',
-  armTimeoutMs: 30_000,
 }
 
 interface ModeHarness {
@@ -70,7 +69,7 @@ describe('Medical Agent Preset routing', () => {
       id: 'message-1',
     } as Message])
     expect(harness.append).toHaveBeenCalledWith('request/header', {
-      header: { config: expect.objectContaining({ provider: 'cc-api', model: 'claude-fable-5' }) },
+      header: { config: expect.objectContaining({ provider: 'cc-api', model: 'claude-fable-5-1' }) },
       reason: 'initial',
     })
     expect(rename).toHaveBeenCalledWith(harness.agent.session, '医学病例 · 咳嗽 3 天')
@@ -81,13 +80,13 @@ describe('Medical Agent Preset routing', () => {
     const coordinator = new MedicalModeCoordinator(() => settings, harness.agentPresets)
     coordinator.sync(harness.agent)
     expect(harness.append).toHaveBeenCalledWith('request/header', {
-      header: { config: expect.objectContaining({ provider: 'cc-api', model: 'claude-fable-5' }) },
+      header: { config: expect.objectContaining({ provider: 'cc-api', model: 'claude-fable-5-1' }) },
       reason: 'initial',
     })
     await expect(coordinator.routeRequest(harness.agent, async () => ({
       provider: 'deepseek-official', model: 'deepseek-v4-pro', maxTokens: 8_000,
     }))).resolves.toMatchObject({
-      provider: 'cc-api', model: 'claude-fable-5', reasoningEffort: 'high',
+      provider: 'cc-api', model: 'claude-fable-5-1', reasoningEffort: 'high',
     })
     expect((await coordinator.routeRequest(harness.agent, async () => ({
       provider: 'deepseek-official', model: 'deepseek-v4-pro', maxTokens: 8_000,

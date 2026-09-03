@@ -2,14 +2,12 @@
 export interface MedicalSettings {
   /** Whether new medical analyses are admitted. */
   enabled: boolean
-  /** Provider route used for the one medical model request. */
+  /** Provider route kept stable across Medical-mode turns. */
   provider: string
-  /** Provider-owned model id used for the one medical model request. */
+  /** Provider-owned model id kept stable across Medical-mode turns. */
   model: string
-  /** Adapter-owned reasoning effort used for the one medical model request. */
+  /** Adapter-owned reasoning effort kept stable across Medical-mode turns. */
   reasoningEffort: string
-  /** Maximum delay between command admission and the standard Prompt. */
-  armTimeoutMs: number
 }
 
 /** Analysis emphasis selected by the case form. */
