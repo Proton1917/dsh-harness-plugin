@@ -24,8 +24,8 @@ function settingsScope(enabled: boolean): SettingsScope<MedicalSettings> {
     status: 'ready',
     value: {
       enabled,
-      provider: 'cc-api',
-      model: 'claude-fable-5-1',
+      provider: 'anthropic',
+      model: 'anthropic/claude-fable-5.1',
       reasoningEffort: 'high',
     },
     base: undefined,
@@ -54,7 +54,7 @@ describe('medical settings and case desk', () => {
         t={t}
       />,
     )
-    expect(screen.getByText('cc-api / claude-fable-5-1 / high')).toBeTruthy()
+    expect(screen.getByText('anthropic / anthropic/claude-fable-5.1 / high')).toBeTruthy()
     fireEvent.click(screen.getByRole('switch'))
     await waitFor(() => { expect(setEnabled).toHaveBeenCalledWith(true) })
 
@@ -77,7 +77,7 @@ describe('medical settings and case desk', () => {
     fireEvent.click(screen.getByRole('button', { name: '打开医学病例分析' }))
     expect(screen.getByRole('dialog', { name: '临床推演室' })).toBeTruthy()
     expect(screen.getByText('提交前去标识化')).toBeTruthy()
-    expect(screen.getByText('cc-api / claude-fable-5-1 / high')).toBeTruthy()
+    expect(screen.getByText('anthropic / anthropic/claude-fable-5.1 / high')).toBeTruthy()
     expect(screen.getByText('固定医学路由 · 多轮复用缓存')).toBeTruthy()
     expect(screen.queryByText('快速投递')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: '创建病例会话并分析' }))

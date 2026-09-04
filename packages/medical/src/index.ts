@@ -19,8 +19,8 @@ export const MEDICAL_SETTINGS_NAMESPACE = 'medical'
 /** Default route and disabled-by-default admission policy. */
 export const DEFAULT_MEDICAL_SETTINGS: MedicalSettings = Object.freeze({
   enabled: false,
-  provider: 'cc-api',
-  model: 'claude-fable-5-1',
+  provider: 'anthropic',
+  model: 'anthropic/claude-fable-5.1',
   reasoningEffort: 'high',
 })
 

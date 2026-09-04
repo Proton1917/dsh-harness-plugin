@@ -42,7 +42,7 @@ dsh --profile web --dump-config
 pnpm --dir "${DSH_HOME:-$HOME/.dsh}/profiles/web" exec dsh-medical-preset install
 ```
 
-打开设置 → 通用，填写 DSH 模型选择器中存在的 Provider ID、Model ID 和推理强度，再启用医学病例分析。当前 `main` 源码默认使用已验证的 AI Code 路由 `cc-api / claude-fable-5-1 / high`；不可变的 `v0.1.0` 资产保留发布时的默认值。插件也接受其他已配置的 DSH 路由，Fable 不是运行前提。
+打开设置 → 通用，填写 DSH 模型选择器中存在的 Provider ID、Model ID 和推理强度，再启用医学病例分析。当前 `main` 源码默认使用严格锁定 Anthropic 的 OpenRouter 路由 `anthropic / anthropic/claude-fable-5.1 / high`；不可变的 `v0.1.0` 资产保留发布时的默认值。插件也接受其他已配置的 DSH 路由，Fable 不是运行前提。
 
 移除医学包前，先删除受管 Preset：
 

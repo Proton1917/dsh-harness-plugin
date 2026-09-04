@@ -42,7 +42,7 @@ The medical package ships a separate preset installer because user Agent Presets
 pnpm --dir "${DSH_HOME:-$HOME/.dsh}/profiles/web" exec dsh-medical-preset install
 ```
 
-Open Settings → General, configure an exact Provider ID, Model ID, and reasoning effort available in the DSH model selector, then enable Medical case analysis. The current `main` checkout defaults to the validated `cc-api / claude-fable-5-1 / high` AI Code route; immutable `v0.1.0` assets retain their published defaults. The plugin accepts another configured DSH route and does not require Fable.
+Open Settings → General, configure an exact Provider ID, Model ID, and reasoning effort available in the DSH model selector, then enable Medical case analysis. The current `main` checkout defaults to the OpenRouter route `anthropic / anthropic/claude-fable-5.1 / high`, locked to Anthropic; immutable `v0.1.0` assets retain their published defaults. The plugin accepts another configured DSH route and does not require Fable.
 
 Before removing the medical package, remove its managed preset:
 
