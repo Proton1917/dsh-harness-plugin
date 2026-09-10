@@ -1,10 +1,10 @@
+import { expandAssistantStream } from '@deepseek-ai/dsh-llm/assistant-stream'
 import { z } from 'zod'
 import type { ContentBlock, Message, StreamChunk, TokenUsage } from '@deepseek-ai/dsh-llm'
 import type { EpochHeader, SessionEvent, SurfaceEvent } from '@deepseek-ai/dsh-session'
-import { isSurfaceEvent } from '@deepseek-ai/dsh-session'
 import type { ProjectionDefinition } from '@deepseek-ai/dsh-session-projection'
 import type { TokenUsageProjection } from '@deepseek-ai/dsh-token-meter/client'
-import type { TokenCounter } from './tokenizer.ts'
+import type { TokenCounter } from './token-counter.ts'
 import type { LiveTokenUsageProjection } from './types.ts'
 
 const zeroBuckets = (): TokenUsageProjection => ({
@@ -37,6 +37,7 @@ const projectionSchema = z.object({
   outputTokens: z.number().int().nonnegative(),
   cacheReadTokens: z.number().int().nonnegative(),
   cacheWriteTokens: z.number().int().nonnegative(),
+  activeStepUsage: z.object({ uncachedInputTokens: z.number(), outputTokens: z.number(), cacheReadTokens: z.number(), cacheWriteTokens: z.number() }).optional(),
   estimated: z.boolean(),
   tokensPerSecond: z.number().nonnegative().optional(),
 }).strict() as unknown as z.ZodType<LiveTokenUsageProjection>
@@ -150,6 +151,7 @@ function surfaceMessage(event: SurfaceEvent): Message {
   switch (event.type) {
     case 'user/message':
       return event.data
+    case 'system/message':
     case 'assistant/message':
     case 'tool/result':
       return event.data.message
@@ -169,11 +171,11 @@ function applySurface(
     }
   }
   const operation = event.surfaceOp
-  const start = state.surface.findIndex(node => node.seq === operation.start)
-  const end = state.surface.findIndex(node => node.seq === operation.end)
+  const start = state.surface.findIndex(node => node.seq === operation.startSeq)
+  const end = state.surface.findIndex(node => node.seq === operation.endSeq)
   if (start === -1 || end === -1 || start > end) {
     throw new Error(
-      `live-stats: replace at seq ${event.seq} has invalid current range ${operation.start}-${operation.end}`,
+      `live-stats: replace at seq ${event.seq} has invalid current range ${operation.startSeq}-${operation.endSeq}`,
     )
   }
   const removed = state.surface.slice(start, end + 1)
@@ -271,6 +273,25 @@ function exactStep(step: ActiveStep, usage: TokenUsage): ActiveStep {
   }
 }
 
+function applyChunk(active: ActiveStep, chunk: StreamChunk, time: number, counter: TokenCounter): ActiveStep {
+  if (chunk.type === 'usage') return exactStep(active, chunk.usage)
+  const blocks = applyOutputChunk(active.blocks, chunk)
+  if (blocks === active.blocks) return active
+  const added = outputDeltaTokens(chunk, counter)
+  const tokens = active.exact ? active.buckets.outputTokens : chunk.type === 'block-end' ? outputTokens(blocks, counter) : active.buckets.outputTokens + added
+  return {
+    ...active, blocks, buckets: { ...active.buckets, outputTokens: tokens },
+    ...(added > 0 ? { firstOutputTime: active.firstOutputTime ?? time, firstOutputTokens: active.firstOutputTokens ?? tokens, latestOutputTime: time } : {}),
+  }
+}
+
+/** Fold one transient attempt using provider timestamps and the same tokenizer as replay. */
+export function sampleLiveChunks(chunks: readonly { chunk: StreamChunk; time: number }[], counter: TokenCounter) {
+  let active: ActiveStep = { turn: 0, step: 0, buckets: zeroBuckets(), blocks: [], exact: false }
+  for (const member of chunks) active = applyChunk(active, member.chunk, member.time, counter)
+  return { buckets: active.buckets, exact: active.exact, tokensPerSecond: rateOf(active) }
+}
+
 function view(state: State): LiveTokenUsageProjection {
   const active = state.active
   const previous = active !== null
@@ -288,6 +309,7 @@ function view(state: State): LiveTokenUsageProjection {
   return {
     ...buckets,
     estimated: estimates > 0,
+    ...(active === null ? {} : { activeStepUsage: active.buckets }),
     ...(rate === undefined ? {} : { tokensPerSecond: rate }),
   }
 }
@@ -337,45 +359,14 @@ export function createLiveTokenUsageProjectionDefinition(
             },
           }),
         }
-      } else if (event.type === 'assistant/chunk' && next.active !== null) {
-        const { chunk } = event.data
-        if (chunk.type === 'usage') {
-          next = { ...next, active: exactStep(next.active, chunk.usage) }
-        } else {
-          const blocks = applyOutputChunk(next.active.blocks, chunk)
-          if (blocks !== next.active.blocks) {
-            const addedTokens = outputDeltaTokens(chunk, counter)
-            const tokens = chunk.type === 'block-end'
-              ? outputTokens(blocks, counter)
-              : next.active.buckets.outputTokens + addedTokens
-            const isOutputDelta = chunk.type === 'text-delta'
-              || chunk.type === 'reasoning-delta'
-              || chunk.type === 'tool-call-delta'
-            const advanced = isOutputDelta && addedTokens > 0
-            next = {
-              ...next,
-              active: {
-                ...next.active,
-                blocks,
-                buckets: { ...next.active.buckets, outputTokens: tokens },
-                ...(advanced
-                  ? {
-                    firstOutputTime: next.active.firstOutputTime ?? event.time,
-                    firstOutputTokens: next.active.firstOutputTokens ?? tokens,
-                    latestOutputTime: event.time,
-                  }
-                  : {}),
-              },
-            }
-          }
-        }
-      } else if (event.type === 'assistant/message' && next.active !== null) {
-        next = {
-          ...next,
-          active: event.data.usage === undefined
-            ? next.active
-            : exactStep(next.active, event.data.usage),
-        }
+      } else if ((event.type === 'assistant/message' || event.type === 'assistant/attempt') && next.active !== null) {
+        let active: ActiveStep = { ...next.active, blocks: [], exact: false, buckets: { ...next.active.buckets, outputTokens: 0 } }
+        delete active.firstOutputTime
+        delete active.firstOutputTokens
+        delete active.latestOutputTime
+        for (const member of expandAssistantStream(event.data.stream)) active = applyChunk(active, member.chunk, member.time, counter)
+        if (event.type === 'assistant/message' && event.data.usage !== undefined) active = exactStep(active, event.data.usage)
+        next = { ...next, active }
       } else if (event.type === 'step/end' && next.active !== null) {
         const active = next.active
         const rate = rateOf(active)
@@ -409,10 +400,15 @@ export function createLiveTokenUsageProjectionDefinition(
         }
       }
 
-      if (isSurfaceEvent(event)) next = { ...next, ...applySurface(next, event, counter) }
+      if (event.type === 'system/message' || event.type === 'user/message' || event.type === 'assistant/message' || event.type === 'tool/result') {
+        next = { ...next, ...applySurface(next, event, counter) }
+        if ((event.type === 'system/message' || event.type === 'user/message') && next.active !== null && !next.active.exact) {
+          next = { ...next, active: { ...next.active, buckets: { ...next.active.buckets, uncachedInputTokens: counter.countHeader(next.header) + next.surfaceTokens } } }
+        }
+      }
       return next
     },
     wire: { viewSchema: projectionSchema, view },
-    stateVersion: 3,
+    stateVersion: 4,
   } satisfies ProjectionDefinition<'liveTokenUsage', State>
 }

@@ -23,6 +23,7 @@ export default defineConfig([
     dts: false,
     sourcemap: true,
     deps: {
+      alwaysBundle: [new RegExp('^@huggingface/tokenizers'), /^zod/, new RegExp('^@deepseek-ai/dsh-llm')],
       neverBundle: [
         '@deepseek-ai/cordis',
         'react',

@@ -4,6 +4,8 @@ import type { TokenUsageProjection } from '@deepseek-ai/dsh-token-meter/client'
 export interface LiveTokenUsageProjection extends TokenUsageProjection {
   /** Whether any displayed input or output bucket still contains an estimate. */
   estimated: boolean
+  /** Active step contribution already included in the cumulative Host totals. */
+  activeStepUsage?: TokenUsageProjection
   /** Output throughput for the active or latest response when an interval exists. */
   tokensPerSecond?: number
 }

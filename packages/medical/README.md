@@ -41,7 +41,7 @@ dsh plugin --profile web remove @proton1917/dsh-medical
 ## 结构化病例数据流
 
 1. Client 通过官方 `session.create` 创建全新 `medical` Agent Preset 会话；优先沿用当前会话所属 Workspace，当前会话不属于 Workspace 时创建未分组会话，不猜测其他最近使用的 Workspace。
-2. 插件在会话创建时写入配置的医学请求头；客户端模型控件从这份会话级投影读取当前路由，不调用会写回全局默认模型的 `session.selectModel`。默认路由为 `anthropic / anthropic/claude-fable-5.1 / high`。
+2. 插件在会话创建时通过 `model/selection` 记录医学路由；客户端模型控件读取这份会话级投影。实际 `request/header` 由 Agent Loop 在已开始的回合内写入，插件不调用会写回全局默认模型的 `session.selectModel`。默认路由为 `anthropic / anthropic/claude-fable-5.1 / high`。
 3. Client 在病例消息前写入 `医学病例 · <主诉摘要>` 确定性标题。标题写入失败则停止，不调用标题模型，也不打开失败会话。
 4. Client 通过标准 `SessionFace.prompt` 提交结构化文本和可选原图；附件服务保存图片字节，Session Log 保存标准引用。Prompt 被接受后才打开病例会话。
 5. Preset 装入完整医学系统提示、抑制运行时编码上下文，并通过工具白名单和执行 guard 双层限制全部工具；不添加步骤或轮次门禁。
@@ -51,7 +51,7 @@ dsh plugin --profile web remove @proton1917/dsh-medical
 ## 医学模式数据流
 
 1. Agent Preset roster 从 `${DSH_HOME:-$HOME/.dsh}/.agent-presets/medical/` 读取 `preset.yml` 和 `agent.cordis.yml`，因此它与标准、PTC、极简、创造模式处于同一个官方菜单。
-2. 用户选择医学模式时，DSH 通过标准 `agent-preset/selected` 事件把选择写入会话日志；插件只对当前解析结果为 `medical` 的 Agent 写入配置的医学请求头，客户端模型控件直接读取这份会话级投影。
+2. 用户选择医学模式时，DSH 通过标准 `agent-preset/selected` 事件把选择写入会话日志；插件只对当前解析结果为 `medical` 的 Agent 写入医学路由的 `model/selection`，客户端模型控件直接读取这份会话级投影。离开医学模式时，同一事件恢复原先路由。
 3. Preset 装入完整医学系统提示、抑制运行时编码上下文，并通过工具白名单和执行 guard 双层限制全部工具；不添加步骤或轮次门禁。
 4. 同一会话的后续用户消息继续携带既有医学对话历史，并沿用相同医学请求头，使提供方可以复用稳定前缀缓存。用户消息不做本地重写；提示要求模型自行整理时间线、合并重复信息、并列矛盾描述，并把无法确定的字段列为待补充。
 5. 新鲜医学会话的第一条用户文本触发确定性标题，立即覆盖并取消自动标题工作；不会增加标题模型调用。

@@ -1,228 +1,89 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import { createMessage, createUserMessage } from '@deepseek-ai/dsh-llm'
-import type { TokenUsage } from '@deepseek-ai/dsh-llm'
+import { AssistantStreamAccumulator } from '@deepseek-ai/dsh-llm/assistant-stream'
 import SessionStore from '@deepseek-ai/dsh-session'
 import type { Session } from '@deepseek-ai/dsh-session'
 import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
-import type { LiveTokenUsageProjection } from '@deepseek-ai/dsh-token-meter/client'
 import { apply, createDeepSeekTokenCounter, inject } from '../src/index.ts'
+import { sampleLiveChunks } from '../src/projection.ts'
 
-afterEach(() => { vi.useRealTimers() })
-
-async function harness(): Promise<{ ctx: Context; session: Session }> {
+const contexts: Context[] = []
+afterEach(async () => { for (const ctx of contexts.splice(0)) await ctx.fiber.dispose() })
+async function harness() {
   const ctx = new Context()
+  contexts.push(ctx)
   await ctx.plugin(SessionStore)
   await ctx.plugin(SessionProjectionRegistry)
   await ctx.plugin({ inject, apply })
   return { ctx, session: ctx.sessions.create() }
 }
-
-function projected(ctx: Context, session: Session): LiveTokenUsageProjection {
+function projected(ctx: Context, session: Session) {
   const value = ctx.sessionProjections.snapshot(session).values.liveTokenUsage
   if (value === undefined) throw new Error('liveTokenUsage projection is absent')
   return value
 }
-
-function usageChunk(session: Session, usage: TokenUsage): number {
-  return session.append('assistant/chunk', {
-    turn: 1,
-    step: 1,
-    chunk: { type: 'usage', usage },
-  }).seq
+const counter = createDeepSeekTokenCounter()
+const chunks = [
+  { time: 1_000, chunk: { type: 'text-delta' as const, index: 0, text: 'abcd' } },
+  { time: 2_000, chunk: { type: 'text-delta' as const, index: 0, text: 'efgh' } },
+]
+function stream() {
+  const accumulator = new AssistantStreamAccumulator()
+  for (const item of chunks) accumulator.push(item)
+  return [...accumulator.snapshot()]
 }
 
-describe('liveTokenUsage projection', () => {
-  it('uses the official tokenizer for streamed completion text', () => {
-    const counter = createDeepSeekTokenCounter()
+describe('v3 live usage', () => {
+  it('uses official tokenizer counts and real delta timestamps', () => {
     expect(counter.countText('ok')).toBe(1)
-    expect(counter.countAssistantOutput([{ type: 'text', text: 'ok' }])).toBe(2)
+    expect(sampleLiveChunks(chunks.slice(0, 1), counter).tokensPerSecond).toBeUndefined()
+    const sample = sampleLiveChunks(chunks, counter)
+    expect(sample.tokensPerSecond).toBe(counter.countText('efgh'))
+    expect(sample.buckets.outputTokens).toBe(counter.countText('abcd') + counter.countText('efgh'))
+    const corrected = sampleLiveChunks([...chunks, { time: 2_100, chunk: { type: 'usage', usage: { inputTokens: 20, outputTokens: 30 } } }], counter)
+    expect(corrected.exact).toBe(true)
+    expect(corrected.buckets.outputTokens).toBe(30)
   })
 
-  it('updates input, output, and TPS per chunk, then accepts provider correction', async () => {
-    vi.useFakeTimers()
-    vi.setSystemTime(1_000)
-    const { ctx, session } = await harness()
-    session.append('user/message', createUserMessage({
-      content: [{ type: 'text', text: 'abcd' }],
-      source: { kind: 'user' },
-    }), { surfaceOp: 'append' })
-    session.append('step/start', { turn: 1, step: 1 })
-    session.append('request/header', {
-      header: { config: { provider: 'mock', model: 'mock' }, system: 'abcd' },
-      reason: 'initial',
-    })
-    const counter = createDeepSeekTokenCounter()
-    const inputTokens = counter.countMessage(createUserMessage({
-      content: [{ type: 'text', text: 'abcd' }],
-      source: { kind: 'user' },
-    })) + counter.countHeader({ config: { provider: 'mock', model: 'mock' }, system: 'abcd' })
-    expect(projected(ctx, session)).toMatchObject({
-      uncachedInputTokens: inputTokens,
-      outputTokens: 0,
-      estimated: true,
-    })
-
-    vi.setSystemTime(2_000)
-    session.append('assistant/chunk', {
-      turn: 1,
-      step: 1,
-      chunk: { type: 'text-delta', index: 0, text: 'abcd' },
-    })
-    vi.setSystemTime(3_000)
-    session.append('assistant/chunk', {
-      turn: 1,
-      step: 1,
-      chunk: { type: 'text-delta', index: 0, text: 'efgh' },
-    })
-    const firstTokens = counter.countText('abcd')
-    const streamedTokens = firstTokens + counter.countText('efgh')
-    expect(projected(ctx, session)).toMatchObject({
-      outputTokens: streamedTokens,
-      estimated: true,
-      tokensPerSecond: streamedTokens - firstTokens,
-    })
-
-    vi.setSystemTime(4_000)
-    usageChunk(session, { inputTokens: 20, outputTokens: 30, cacheReadTokens: 80 })
-    expect(projected(ctx, session)).toEqual({
-      uncachedInputTokens: 20,
-      outputTokens: 30,
-      cacheReadTokens: 80,
-      cacheWriteTokens: 0,
-      estimated: false,
-      tokensPerSecond: 30 - firstTokens,
-    })
+  it('does not invent a TPS interval from a terminal block', () => {
+    const result = sampleLiveChunks([chunks[0]!, { time: 2_000, chunk: { type: 'block-end', index: 0, block: { type: 'text', text: 'abcd' } } }], counter)
+    expect(result.tokensPerSecond).toBeUndefined()
   })
 
-  it('publishes changing TPS frames while output deltas arrive', async () => {
-    vi.useFakeTimers()
-    vi.setSystemTime(1_000)
+  it('publishes replayable settled usage and provider correction through the Host wire', async () => {
     const { ctx, session } = await harness()
-    const rates: number[] = []
-    ctx.sessionProjections.onChanged((changedSession, key, value) => {
-      if (changedSession !== session || key !== 'liveTokenUsage') return
-      const rate = (value as LiveTokenUsageProjection).tokensPerSecond
-      if (rate !== undefined) rates.push(rate)
-    })
+    const frames: unknown[] = []
+    ctx.sessionProjections.onChanged((s, key, value) => { if (s === session && key === 'liveTokenUsage') frames.push(value) })
     session.append('step/start', { turn: 1, step: 1 })
-
-    session.append('assistant/chunk', {
-      turn: 1,
-      step: 1,
-      chunk: { type: 'text-delta', index: 0, text: 'abcd' },
-    })
-    vi.setSystemTime(2_000)
-    session.append('assistant/chunk', {
-      turn: 1,
-      step: 1,
-      chunk: { type: 'text-delta', index: 0, text: 'efgh' },
-    })
-    vi.setSystemTime(2_500)
-    session.append('assistant/chunk', {
-      turn: 1,
-      step: 1,
-      chunk: { type: 'text-delta', index: 0, text: 'ijklmnop' },
-    })
-
-    expect(rates).toHaveLength(2)
-    expect(rates[0]).not.toBe(rates[1])
-    expect(rates[0]).toBeGreaterThan(0)
-    expect(rates[1]).toBeGreaterThan(0)
-  })
-
-  it('round-trips sparse output blocks through the current projection checkpoint schema', async () => {
-    const { ctx, session } = await harness()
-    session.append('step/start', { turn: 1, step: 1 })
-    session.append('assistant/chunk', {
-      turn: 1,
-      step: 1,
-      chunk: { type: 'text-delta', index: 2, text: 'abcd' },
-    })
-
-    const checkpoint = ctx.sessionProjections.checkpoint(session)
-    expect(ctx.sessionProjections.viewCheckpoint(checkpoint).liveTokenUsage).toMatchObject({
-      outputTokens: createDeepSeekTokenCounter().countText('abcd'),
-      estimated: true,
-    })
-  })
-
-  it('does not invent a TPS interval from terminal duplicate events', async () => {
-    vi.useFakeTimers()
-    vi.setSystemTime(1_000)
-    const { ctx, session } = await harness()
-    session.append('step/start', { turn: 1, step: 1 })
-    session.append('assistant/chunk', {
-      turn: 1,
-      step: 1,
-      chunk: { type: 'text-delta', index: 0, text: 'ok' },
-    })
-    vi.setSystemTime(2_000)
-    session.append('assistant/chunk', {
-      turn: 1,
-      step: 1,
-      chunk: { type: 'block-end', index: 0, block: { type: 'text', text: 'ok' } },
-    })
-    expect(projected(ctx, session)).toEqual({
-      uncachedInputTokens: 0,
-      outputTokens: 2,
-      cacheReadTokens: 0,
-      cacheWriteTokens: 0,
-      estimated: true,
-    })
-    usageChunk(session, { inputTokens: 10, outputTokens: 2 })
-    expect(projected(ctx, session)).toEqual({
-      uncachedInputTokens: 10,
-      outputTokens: 2,
-      cacheReadTokens: 0,
-      cacheWriteTokens: 0,
-      estimated: false,
-    })
-  })
-
-  it('replaces same-step retry estimates and drops aborted estimates', async () => {
-    const { ctx, session } = await harness()
-    session.append('step/start', { turn: 1, step: 1 })
-    session.append('assistant/chunk', {
-      turn: 1,
-      step: 1,
-      chunk: { type: 'text-delta', index: 0, text: 'discarded' },
-    })
-    session.append('step/end', { turn: 1, step: 1 })
-
-    session.append('step/start', { turn: 1, step: 1 })
-    const source = usageChunk(session, { inputTokens: 20, outputTokens: 5, cacheReadTokens: 80 })
     session.append('assistant/message', {
-      turn: 1,
-      step: 1,
-      message: createMessage({
-        role: 'assistant',
-        content: [{ type: 'text', text: 'done' }],
-        source: { kind: 'model', provider: 'mock', model: 'mock' },
-      }),
-      usage: { inputTokens: 20, outputTokens: 5, cacheReadTokens: 80 },
-    }, { surfaceOp: 'append', sourceEventSeqs: [source] })
+      turn: 1, step: 1, stream: stream(),
+      message: createMessage({ role: 'assistant', content: [{ type: 'text', text: 'abcdefgh' }], source: { kind: 'model', provider: 'mock', model: 'mock' } }),
+      usage: { inputTokens: 20, outputTokens: 30, cacheReadTokens: 80 },
+    }, { surfaceOp: 'append' })
     session.append('step/end', { turn: 1, step: 1 })
-    expect(projected(ctx, session)).toMatchObject({
-      uncachedInputTokens: 20,
-      outputTokens: 5,
-      cacheReadTokens: 80,
-      estimated: false,
-    })
+    expect(projected(ctx, session)).toMatchObject({ uncachedInputTokens: 20, outputTokens: 30, cacheReadTokens: 80, estimated: false, tokensPerSecond: 30 - counter.countText('abcd') })
+    expect(frames.length).toBeGreaterThan(1)
+  })
 
-    session.append('step/start', { turn: 2, step: 1 })
-    session.append('assistant/chunk', {
-      turn: 2,
-      step: 1,
-      chunk: { type: 'text-delta', index: 0, text: 'partial' },
-    })
-    session.append('step/end', { turn: 2, step: 1 })
-    session.append('turn/end', { turn: 2, reason: { kind: 'aborted' } })
-    expect(projected(ctx, session)).toMatchObject({
-      uncachedInputTokens: 20,
-      outputTokens: 5,
-      cacheReadTokens: 80,
-      estimated: false,
-    })
+  it('counts v3 system messages and seq-based surface replacements', async () => {
+    const { ctx, session } = await harness()
+    const user = (text: string) => createUserMessage({ content: [{ type: 'text', text }], source: { kind: 'user' } })
+    const first = session.append('user/message', user('old'), { surfaceOp: 'append' })
+    session.append('user/message', user('replacement'), { surfaceOp: { op: 'replace', startSeq: first.seq, endSeq: first.seq }, sourceEventSeqs: [first.seq] })
+    session.append('step/start', { turn: 1, step: 1 })
+    const system = createMessage({ role: 'system' as const, content: [{ type: 'text' as const, text: 'medical instructions' }], source: { kind: 'plugin' as const, plugin: 'test' } })
+    session.append('system/message', { turn: 1, step: 1, message: system }, { surfaceOp: 'append' })
+    expect(projected(ctx, session).uncachedInputTokens).toBe(counter.countMessage(user('replacement')) + counter.countText('medical instructions'))
+  })
+
+  it('drops an aborted step estimate while preserving settled billed totals', async () => {
+    const { ctx, session } = await harness()
+    session.append('step/start', { turn: 1, step: 1 })
+    session.append('assistant/attempt', { turn: 1, step: 1, stream: stream() })
+    session.append('step/end', { turn: 1, step: 1 })
+    expect(projected(ctx, session).outputTokens).toBeGreaterThan(0)
+    session.append('turn/end', { turn: 1, reason: { kind: 'aborted' } })
+    expect(projected(ctx, session)).toMatchObject({ outputTokens: 0, estimated: false })
   })
 })

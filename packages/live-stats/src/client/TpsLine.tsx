@@ -1,11 +1,12 @@
 import { memo } from 'react'
 import type { UseProjection } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
-import type {} from '../types.ts'
+import type { LiveTokenUsageProjection } from '../types.ts'
 import { LIVE_STATS_NS } from './locales.ts'
 
 /** Props supplied by the session-scoped composer dock. */
 export interface TpsLineProps {
+  liveUsage?: LiveTokenUsageProjection | undefined
   useProjection: UseProjection
   t: TranslateNS<typeof LIVE_STATS_NS>
 }
@@ -31,8 +32,9 @@ const STYLE = {
 } as const
 
 /** Second composer-status line for active or latest response throughput. */
-export const TpsLine = memo(function TpsLine({ useProjection, t }: TpsLineProps) {
-  const liveRate = useProjection('liveTokenUsage')?.tokensPerSecond
+export const TpsLine = memo(function TpsLine({ useProjection, t, liveUsage: transientUsage }: TpsLineProps) {
+  const projected = useProjection('liveTokenUsage')
+  const liveRate = (transientUsage ?? projected)?.tokensPerSecond
   const stats = useProjection('sessionStats')
   const settledRate = stats !== undefined && stats.decodeMs > 0
     ? stats.decodeTokens / (stats.decodeMs / 1_000)

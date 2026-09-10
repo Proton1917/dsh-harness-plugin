@@ -1,7 +1,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import type { AgentPresets } from '@deepseek-ai/dsh-agent-presets'
-import { PERSONA_SECTION } from '@deepseek-ai/dsh-system-prompt'
+import { PERSONA_PREFIX_SECTION } from '@deepseek-ai/dsh-system-prompt'
 
 /** Services required by the model-facing brand persona. */
 export const inject = ['agents', 'agentPresets', 'systemPrompt']
@@ -40,8 +40,8 @@ export class WhalePersonaCoordinator {
     }
     if (this.minimal.has(agent)) return
     this.minimal.set(agent, agent.ctx.systemPrompt.section({
-      name: PERSONA_SECTION,
-      order: agent.ctx.systemPrompt.getSectionOrder('DEPLOYMENT_PERSONA'),
+      name: PERSONA_PREFIX_SECTION,
+      order: agent.ctx.systemPrompt.getSectionOrder('DEPLOYMENT_PERSONA_PREFIX'),
       text: MINIMAL_WHALE_PERSONA,
       complete: true,
     }))

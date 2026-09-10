@@ -137,7 +137,7 @@ describe('plugin-owned statistics row', () => {
     expect(text).toContain('LLM 1.5s · Tools 0.5s')
     expect(text).toContain('TTFT avg 0.4s')
     expect(text).not.toContain('999.9 tok/s')
-    expect(text).toContain('Cache hit 90%')
+    expect(text).not.toContain('Cache hit')
     expect(text).toContain('Input ~11.4M · Output ~840 · Total ~11,404,840 tok')
   })
 

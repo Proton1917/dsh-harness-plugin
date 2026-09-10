@@ -27,9 +27,9 @@ const testAgentPresets: Pick<AgentPresets, 'composedPreset'> = {
 
 function modeAgent(id: string): ModeHarness {
   let preset = id
-  let config: LlmCallConfig | undefined
-  const append = vi.fn((type: string, data: { header?: { config: LlmCallConfig } }) => {
-    if (type === 'request/header') config = data.header?.config
+  const events: { type: string; data: LlmCallConfig }[] = []
+  const append = vi.fn((type: string, data: LlmCallConfig) => {
+    events.push({ type, data })
   })
   const agentContext = {} as Context
   testPresetByContext.set(agentContext, id)
@@ -39,7 +39,8 @@ function modeAgent(id: string): ModeHarness {
     ctx: agentContext,
     session: {
       header: { id: 'medical-mode-test', version: 0, createdAt: 1, agentPreset: id },
-      requestHeader: () => config === undefined ? undefined : { config },
+      requestHeader: () => undefined,
+      snapshotEvents: () => events,
       append,
     },
   } as unknown as Agent
@@ -55,7 +56,7 @@ function modeAgent(id: string): ModeHarness {
 }
 
 describe('Medical Agent Preset routing', () => {
-  it('pins the Fable header and deterministic title before the first step enters the log', () => {
+  it('pins the Fable selection and deterministic title before the first step enters the log', () => {
     const harness = modeAgent('medical')
     const rename = vi.fn()
     const coordinator = new MedicalModeCoordinator(() => settings, harness.agentPresets, {
@@ -68,21 +69,17 @@ describe('Medical Agent Preset routing', () => {
       source: { kind: 'user', rpcId: 'request-1' },
       id: 'message-1',
     } as Message])
-    expect(harness.append).toHaveBeenCalledWith('request/header', {
-      header: { config: expect.objectContaining({ provider: 'anthropic', model: 'anthropic/claude-fable-5.1' }) },
-      reason: 'initial',
-    })
+    expect(harness.append).toHaveBeenCalledWith('model/selection',
+      expect.objectContaining({ provider: 'anthropic', model: 'anthropic/claude-fable-5.1' }))
     expect(rename).toHaveBeenCalledWith(harness.agent.session, '医学病例 · 咳嗽 3 天')
   })
 
-  it('keeps one cache-stable Fable header across multiple user turns', async () => {
+  it('keeps one Fable selection across multiple user turns without writing request headers', async () => {
     const harness = modeAgent('medical')
     const coordinator = new MedicalModeCoordinator(() => settings, harness.agentPresets)
     coordinator.sync(harness.agent)
-    expect(harness.append).toHaveBeenCalledWith('request/header', {
-      header: { config: expect.objectContaining({ provider: 'anthropic', model: 'anthropic/claude-fable-5.1' }) },
-      reason: 'initial',
-    })
+    expect(harness.append).toHaveBeenCalledWith('model/selection',
+      expect.objectContaining({ provider: 'anthropic', model: 'anthropic/claude-fable-5.1' }))
     await expect(coordinator.routeRequest(harness.agent, async () => ({
       provider: 'deepseek-official', model: 'deepseek-v4-pro', maxTokens: 8_000,
     }))).resolves.toMatchObject({
@@ -111,15 +108,17 @@ describe('Medical Agent Preset routing', () => {
     expect(ordinary.append).not.toHaveBeenCalled()
   })
 
-  it('restores the original route when a blank session switches away from Medical mode', () => {
+  it('restores the original route when a blank session switches away from Medical mode', async () => {
     const harness = modeAgent('medical')
     const coordinator = new MedicalModeCoordinator(() => settings, harness.agentPresets)
     coordinator.sync(harness.agent)
     harness.select('standard')
     coordinator.sync(harness.agent)
-    expect(harness.append).toHaveBeenLastCalledWith('request/header', {
-      header: { config: { provider: 'deepseek-official', model: 'deepseek-v4-pro' } },
-      reason: 'change',
+    expect(harness.append).toHaveBeenLastCalledWith('model/selection', {
+      provider: 'deepseek-official', model: 'deepseek-v4-pro',
     })
+    await expect(coordinator.routeRequest(harness.agent, async () => ({
+      provider: 'anthropic', model: 'anthropic/claude-fable-5.1', reasoningEffort: 'high',
+    } as LlmCallConfig))).resolves.toEqual({ provider: 'deepseek-official', model: 'deepseek-v4-pro' })
   })
 })

@@ -87,7 +87,7 @@ describe('web brand mascot client plugin', () => {
 describe('brand mascot Host persona', () => {
   it('survives the ordinary deployment persona as a separate assembled section', async () => {
     const ctx = new Context()
-    await ctx.plugin(SystemPrompt, { persona: 'ORDINARY_AGENT_PERSONA' })
+    await ctx.plugin(SystemPrompt, { personaPrefix: 'ORDINARY_AGENT_PERSONA' })
     apply(ctx)
 
     const prompt = renderPrompt(await ctx.systemPrompt.assemble())
@@ -127,21 +127,23 @@ describe('brand mascot Host persona', () => {
     expect(dispose).toHaveBeenCalledOnce()
   })
 
-  it('shadows Minimal mode complete persona and retracts it on preset change', () => {
+  it.each([
+    { placement: 'DEPLOYMENT_PERSONA_PREFIX', sectionName: 'deployment:persona-prefix' },
+  ])('shadows Minimal mode $placement and retracts it on preset change', ({ placement, sectionName }) => {
     const dispose = vi.fn()
     const section = vi.fn(() => dispose)
     let preset = 'minimal'
     const agentPresets: Pick<AgentPresets, 'composedPreset'> = { composedPreset: () => preset }
     const agent = {
       ctx: {
-        systemPrompt: { section, getSectionOrder: () => 0 },
+        systemPrompt: { section, getSectionOrder: (name: string) => name === placement ? 0 : undefined },
       },
     } as unknown as Agent
     const coordinator = new WhalePersonaCoordinator(agentPresets)
 
     coordinator.sync(agent)
     expect(section).toHaveBeenCalledWith({
-      name: 'deployment:persona',
+      name: sectionName,
       order: 0,
       text: MINIMAL_WHALE_PERSONA,
       complete: true,

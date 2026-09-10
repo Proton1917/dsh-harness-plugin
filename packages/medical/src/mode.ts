@@ -1,5 +1,6 @@
-import type { Agent } from '@deepseek-ai/dsh-agent'
+import type { Agent, ModelSelection } from '@deepseek-ai/dsh-agent'
 import type { AgentPresets } from '@deepseek-ai/dsh-agent-presets'
+import type {} from '@deepseek-ai/dsh-api-session-controller'
 import { ReasoningEffortId, type LlmCallConfig, type Message } from '@deepseek-ai/dsh-llm'
 import type { SessionTitleService } from '@deepseek-ai/dsh-session-title'
 import { medicalSessionTitle } from './shared.ts'
@@ -31,9 +32,24 @@ function sameRoute(left: LlmCallConfig | undefined, right: LlmCallConfig): boole
     && left.reasoningEffort === right.reasoningEffort
 }
 
+function selectedRoute(agent: Agent): ModelSelection | undefined {
+  const event = agent.session.snapshotEvents().findLast(event =>
+    event.type === 'model/selection' || event.type === 'request/header')
+  const config = event?.type === 'model/selection'
+    ? event.data
+    : event?.type === 'request/header' ? event.data.header.config : undefined
+  if (config === undefined) return undefined
+  return {
+    provider: config.provider,
+    model: config.model,
+    ...(config.reasoningEffort === undefined ? {} : { reasoningEffort: ReasoningEffortId(config.reasoningEffort) }),
+  }
+}
+
 /** Keep the Medical Agent Preset on Fable without changing other presets. */
 export class MedicalModeCoordinator {
-  private readonly original = new Map<Agent, LlmCallConfig | undefined>()
+  private readonly original = new Map<Agent, ModelSelection | undefined>()
+  private readonly restoring = new Map<Agent, ModelSelection>()
 
   /** @param currentSettings - latest persisted medical settings. */
   constructor(
@@ -57,39 +73,52 @@ export class MedicalModeCoordinator {
     this.titles.rename(agent.session, medicalSessionTitle(text.join(' ')))
   }
 
-  /** Apply or withdraw the durable request header after preset composition changes. */
+  /** Record Session-local route intent; the Agent Loop owns turn-enclosed request headers. */
   sync(agent: Agent): void {
     if (!isMedicalMode(agent, this.agentPresets)) {
       if (!this.original.has(agent)) return
       const restore = this.original.get(agent)
       this.original.delete(agent)
-      if (restore !== undefined && !sameRoute(agent.session.requestHeader()?.config, restore)) {
-        agent.session.append('request/header', { header: { config: restore }, reason: 'change' })
+      if (restore !== undefined && !sameRoute(selectedRoute(agent), restore)) {
+        agent.session.append('model/selection', restore)
+        this.restoring.set(agent, restore)
       }
       return
     }
 
     const route = medicalRouteConfig(this.currentSettings())
+    this.restoring.delete(agent)
     if (!this.original.has(agent)) {
-      const current = agent.session.requestHeader()?.config
+      const current = selectedRoute(agent)
       const fallback = agent.options.provider !== undefined && agent.options.model !== undefined
-        ? { provider: agent.options.provider, model: agent.options.model }
+        ? {
+            provider: agent.options.provider,
+            model: agent.options.model,
+            ...(agent.options.reasoningEffort === undefined ? {} : { reasoningEffort: agent.options.reasoningEffort }),
+          }
         : undefined
       this.original.set(agent, sameRoute(current, route) ? fallback : current ?? fallback)
     }
-    const current = agent.session.requestHeader()?.config
+    const current = selectedRoute(agent)
     if (!sameRoute(current, route)) {
-      agent.session.append('request/header', {
-        header: { config: route },
-        reason: current === undefined ? 'initial' : 'change',
-      })
+      agent.session.append('model/selection', route)
     }
   }
 
   /** Route every user turn in Medical mode through the configured Fable route. */
   async routeRequest(agent: Agent, next: () => Promise<LlmCallConfig>): Promise<LlmCallConfig> {
     const resolved = await next()
-    if (!isMedicalMode(agent, this.agentPresets)) return resolved
+    if (!isMedicalMode(agent, this.agentPresets)) {
+      const restore = this.restoring.get(agent)
+      if (restore === undefined) return resolved
+      if (!sameRoute(selectedRoute(agent), restore) || sameRoute(resolved, restore)) {
+        this.restoring.delete(agent)
+        return resolved
+      }
+      // A pending selection is durable before the Host's last-used header changes.
+      const { reasoningEffort: _inheritedEffort, ...withoutInheritedEffort } = resolved
+      return { ...withoutInheritedEffort, ...restore }
+    }
     const settings = this.currentSettings()
     if (!settings.enabled) {
       throw new Error('医学模式当前已关闭，请在设置中启用“医学病例分析”。')
@@ -101,10 +130,12 @@ export class MedicalModeCoordinator {
   /** Release bookkeeping when an Agent leaves the live registry. */
   disposeAgent(agent: Agent): void {
     this.original.delete(agent)
+    this.restoring.delete(agent)
   }
 
   /** Release every retained Agent reference during plugin teardown. */
   dispose(): void {
     this.original.clear()
+    this.restoring.clear()
   }
 }

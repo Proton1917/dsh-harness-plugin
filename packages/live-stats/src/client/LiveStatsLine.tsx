@@ -3,7 +3,7 @@ import type { UseProjection } from '@deepseek-ai/dsh-api-session-controller/clie
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-session-stats/client'
 import type { TokenUsageProjection } from '@deepseek-ai/dsh-token-meter/client'
-import type {} from '../types.ts'
+import type { LiveTokenUsageProjection } from '../types.ts'
 import { LIVE_STATS_NS } from './locales.ts'
 
 const fullTokenCount = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
@@ -60,15 +60,17 @@ export function cacheHitPercent(usage: TokenUsageProjection): number | null {
 
 /** Props supplied by the session-scoped composer dock. */
 export interface LiveStatsLineProps {
+  liveUsage?: LiveTokenUsageProjection | undefined
   useProjection: UseProjection
   t: TranslateNS<typeof LIVE_STATS_NS>
 }
 
 /** Plugin-owned replacement for the built-in statistics row. */
-export const LiveStatsLine = memo(function LiveStatsLine({ useProjection, t }: LiveStatsLineProps) {
+export const LiveStatsLine = memo(function LiveStatsLine({ useProjection, t, liveUsage: transientUsage }: LiveStatsLineProps) {
   const stats = useProjection('sessionStats')
   const durableUsage = useProjection('tokenUsage')
-  const liveUsage = useProjection('liveTokenUsage')
+  const projected = useProjection('liveTokenUsage')
+  const liveUsage = transientUsage ?? projected
   const groups: string[] = []
 
   if (stats !== undefined && stats.steps > 0) {
@@ -80,11 +82,6 @@ export const LiveStatsLine = memo(function LiveStatsLine({ useProjection, t }: L
     if (stats.ttftSteps > 0) {
       groups.push(t('ttftAverage', { duration: formatDuration(stats.ttftMs / stats.ttftSteps) }))
     }
-  }
-
-  if (durableUsage !== undefined) {
-    const hit = cacheHitPercent(durableUsage)
-    if (hit !== null) groups.push(t('cacheHit', { percent: hit }))
   }
 
   const displayUsage = liveUsage ?? durableUsage
