@@ -69,7 +69,10 @@ export function apply(ctx: Context, config: Config = DEFAULT_MEDICAL_SETTINGS): 
     if (step === 1) medicalMode.prepareStep(agent, messages)
     return next()
   })
-  ctx.on('agent/created', ({ agent }) => { medicalMode.sync(agent) })
+  ctx.on('agent/created', ({ agent }) => {
+    medicalMode.sync(agent)
+    return undefined
+  })
   ctx.on('agent-preset/selected', (sessionId) => {
     const agent = ctx.agents.get(sessionId)
     if (agent === undefined) return

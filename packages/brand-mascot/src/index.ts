@@ -71,7 +71,10 @@ export function apply(ctx: Context): void {
     'brand-mascot: whale-girl persona',
   )
   const coordinator = new WhalePersonaCoordinator(ctx.agentPresets)
-  ctx.on('agent/created', ({ agent }) => { coordinator.sync(agent) })
+  ctx.on('agent/created', ({ agent }) => {
+    coordinator.sync(agent)
+    return undefined
+  })
   ctx.on('agent-preset/selected', (sessionId) => {
     const agent = ctx.agents.get(sessionId)
     if (agent !== undefined) coordinator.sync(agent)

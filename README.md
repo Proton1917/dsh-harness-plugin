@@ -81,7 +81,7 @@ The output supports medical education, research, and clinician-reviewed decision
 
 ## Compatibility
 
-The immutable `v0.1.0` release assets were built and verified for DSH `0.1.1-rc.2`. The current `main` source checkout targets DSH `0.1.5-rc.2`, with exact development dependencies from npm. Install the `v0.1.0` tarballs with DSH `0.1.1-rc.2`; use the current source checkout with DSH `0.1.5-rc.2`.
+The immutable `v0.1.0` release assets were built and verified for DSH `0.1.1-rc.2`. The current `main` source checkout targets DSH `0.1.6-alpha.1`, with exact development dependencies from npm. Install the `v0.1.0` tarballs with DSH `0.1.1-rc.2`; use the current source checkout with DSH `0.1.6-alpha.1`.
 
 ## Development
 
