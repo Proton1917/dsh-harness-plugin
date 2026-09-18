@@ -50,6 +50,36 @@ describe('web background client plugin', () => {
     expect(document.querySelector('#root')).not.toBeNull()
   })
 
+  it('realigns after the Session replaces its scroll element and disconnects on disposal', async () => {
+    const effects: Array<() => void> = []
+    const root = document.createElement('div')
+    document.body.append(root)
+    const scroll = (left: number, width: number) => {
+      const element = document.createElement('div')
+      element.setAttribute('data-conversation-scroll', '')
+      element.getBoundingClientRect = () => ({ left, width } as DOMRect)
+      return element
+    }
+    root.append(scroll(280, 918))
+    apply({
+      theme: { overrideTokens: () => () => {} },
+      effect: (install: () => () => void) => { effects.push(install()) },
+    } as unknown as ClientContext)
+    const backdrop = document.querySelector<HTMLElement>('[data-dsh-web-background]')!
+    root.replaceChildren(scroll(56, 1142))
+    await Promise.resolve()
+    expect(backdrop.style.getPropertyValue('--dsh-background-conversation-left')).toBe('56px')
+    expect(backdrop.style.getPropertyValue('--dsh-background-conversation-width')).toBe('1142px')
+    root.replaceChildren()
+    await Promise.resolve()
+    expect(backdrop.style.getPropertyValue('--dsh-background-conversation-left')).toBe('')
+    for (const dispose of effects.reverse()) dispose()
+    root.append(scroll(100, 600))
+    await Promise.resolve()
+    expect(document.querySelector('[data-dsh-web-background]')).toBeNull()
+    expect(backdrop.style.getPropertyValue('--dsh-background-conversation-left')).toBe('')
+  })
+
   it('supports responsive and accessibility media queries', () => {
     const styles = backgroundStyles('data:image/webp;base64,AAAA')
 

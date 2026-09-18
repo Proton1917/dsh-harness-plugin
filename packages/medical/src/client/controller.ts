@@ -1,7 +1,9 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type { PromptContentPart } from '@deepseek-ai/dsh-api-remotes/client'
-import type { ISessions, SessionFace } from '@deepseek-ai/dsh-api-session-controller/client'
+import type { ISessions, SessionFace, SessionListState } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { IWorkspaces, WorkspaceId } from '@deepseek-ai/dsh-api-workspace-controller/client'
+import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
+import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
 import { medicalSessionTitle, renderMedicalCaseMessage } from '../shared.ts'
 import type { MedicalCaseInput } from '../types.ts'
@@ -19,7 +21,7 @@ export interface MedicalSubmitDependencies {
     workspaceId: WorkspaceId | undefined,
     agentPreset: string,
   ) => Promise<void>
-  waitForSession: (sessionId: SessionId) => Promise<SessionFace>
+  withSession: (sessionId: SessionId, operation: (session: SessionFace) => Promise<void>) => Promise<void>
   openSession: (sessionId: SessionId) => void
 }
 
@@ -82,54 +84,28 @@ export function createMedicalSubmitter(deps: MedicalSubmitDependencies) {
   ): Promise<SessionId> => {
     const sessionId = crypto.randomUUID() as SessionId
     await deps.createSession(sessionId, workspaceId, 'medical')
-    const session = await deps.waitForSession(sessionId)
-    const renamed = await session.rename(medicalSessionTitle(input.chiefComplaint))
-    if (!renamed.ok) {
-      throw new Error(`医学病例会话命名失败：${renamed.error.message}`)
-    }
-    const prompted = await session.prompt(await medicalPromptContent(input, images), 'queue')
-    if (!prompted.ok) throw new Error(`医学病例提交失败：${prompted.error.message}`)
-    deps.openSession(sessionId)
+    await deps.withSession(sessionId, async session => {
+      const renamed = await session.rename(medicalSessionTitle(input.chiefComplaint))
+      if (!renamed.ok) {
+        throw new Error(`医学病例会话命名失败：${renamed.error.message}`)
+      }
+      const prompted = await session.prompt(await medicalPromptContent(input, images), 'queue')
+      if (!prompted.ok) throw new Error(`医学病例提交失败：${prompted.error.message}`)
+      deps.openSession(sessionId)
+    })
     return sessionId
   }
 }
 
 function workspaceForNewCase(ctx: MedicalClientContext): WorkspaceId | undefined {
-  const sessions = ctx.sessions.list.getSnapshot()
+  const sessions: SessionListState = ctx.sessions.list.getSnapshot()
   const workspaces = ctx.workspaces.list.getSnapshot()
-  const current = sessions.current
+  const current = Object.values(sessions.byId).find(session => (session.retainedBy.mainView ?? 0) > 0)?.id
   if (current !== undefined) {
     const owner = workspaces.items.find(workspace => workspace.sessionIds.includes(current))
     if (owner !== undefined) return owner.workspaceId
   }
   return undefined
-}
-
-function waitForSession(ctx: MedicalClientContext, sessionId: SessionId): Promise<SessionFace> {
-  const immediate = ctx.sessions.binding(sessionId)?.session
-  if (immediate !== undefined) return Promise.resolve(immediate)
-  return new Promise<SessionFace>((resolve, reject) => {
-    let settled = false
-    let stop = (): void => {}
-    const finish = (session?: SessionFace): void => {
-      if (settled) return
-      settled = true
-      clearTimeout(timeout)
-      stop()
-      if (session === undefined) {
-        reject(new Error(`医学病例会话 ${sessionId} 未出现在客户端会话目录中。`))
-      } else {
-        resolve(session)
-      }
-    }
-    const check = (): void => {
-      const session = ctx.sessions.binding(sessionId)?.session
-      if (session !== undefined) finish(session)
-    }
-    const timeout = setTimeout(() => { finish() }, 10_000)
-    stop = ctx.sessions.list.subscribe(check)
-    check()
-  })
 }
 
 /** Client-side orchestrator for fresh medical sessions. */
@@ -149,8 +125,11 @@ export class MedicalClientController {
           throw new Error(`医学病例会话创建失败：${response.error.message}`)
         }
       },
-      waitForSession: sessionId => waitForSession(ctx, sessionId),
-      openSession: sessionId => { ctx.sessions.open(sessionId) },
+      withSession: (sessionId, operation) => ctx.sessions.using(
+        sessionId, { source: 'controllerOperation' },
+        async reference => { await operation((await reference.ready).session) },
+      ),
+      openSession: sessionId => { ctx.uiWorkspace.openSession(sessionId) },
     })
   }
 

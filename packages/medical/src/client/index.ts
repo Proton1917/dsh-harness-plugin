@@ -23,7 +23,7 @@ export { MEDICAL_STYLES } from './styles.ts'
 /** Client services required by the medical settings and launcher surfaces. */
 export const inject = [
   'slots', 'locale', 'settingsScope', 'remote',
-  'sessions', 'workspaces',
+  'sessions', 'workspaces', 'uiWorkspace',
 ]
 
 /** Install the medical settings row, sidebar launcher, and case desk. */

@@ -178,16 +178,13 @@ function installConversationAlignment(backdrop: HTMLDivElement): () => void {
     target = next
     if (target !== null) {
       resize?.observe(target)
-      discovery?.disconnect()
     }
     write()
   }
 
   findTarget()
-  if (target === null) {
-    discovery = new MutationObserver(findTarget)
-    discovery.observe(document.body, { childList: true, subtree: true })
-  }
+  discovery = new MutationObserver(findTarget)
+  discovery.observe(document.body, { childList: true, subtree: true })
   window.addEventListener('resize', schedule)
 
   return () => {

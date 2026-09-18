@@ -3,7 +3,7 @@ import type { WorkspaceId } from '@deepseek-ai/dsh-api-workspace-controller/clie
 import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
 import { describe, expect, it, vi } from 'vitest'
 import {
-  createMedicalSubmitter, medicalPromptContent,
+  createMedicalSubmitter, medicalPromptContent, MedicalClientController, type MedicalClientContext,
 } from '../src/client/controller.ts'
 import type { MedicalCaseInput } from '../src/types.ts'
 
@@ -37,15 +37,15 @@ describe('medical Client submission', () => {
     const session = { rename, prompt } as unknown as SessionFace
     const submit = createMedicalSubmitter({
       createSession,
-      waitForSession: async () => {
-        order.push('wait')
-        return session
+      withSession: async (_id, operation) => {
+        order.push('retain')
+        try { await operation(session) } finally { order.push('release') }
       },
       openSession: () => { order.push('open') },
     })
     const id = await submit(input, [], 'workspace-1' as WorkspaceId)
     expect(typeof id).toBe('string')
-    expect(order).toEqual(['create', 'wait', 'rename', 'prompt', 'open'])
+    expect(order).toEqual(['create', 'retain', 'rename', 'prompt', 'open', 'release'])
     expect(createSession).toHaveBeenCalledWith(expect.any(String), 'workspace-1', 'medical')
     expect(rename).toHaveBeenCalledWith('医学病例 · 发热伴咳嗽 5 天')
     expect(prompt.mock.calls[0]?.[0][0]).toMatchObject({
@@ -66,7 +66,7 @@ describe('medical Client submission', () => {
     } as unknown as SessionFace
     const submit = createMedicalSubmitter({
       createSession: async (_sessionId: SessionId) => {},
-      waitForSession: async () => session,
+      withSession: async (_id, operation) => { await operation(session) },
       openSession,
     })
     await expect(submit(input, [])).rejects.toThrow('会话命名失败')
@@ -85,11 +85,46 @@ describe('medical Client submission', () => {
     } as unknown as SessionFace
     const submit = createMedicalSubmitter({
       createSession: async (_sessionId: SessionId) => {},
-      waitForSession: async () => session,
+      withSession: async (_id, operation) => { await operation(session) },
       openSession,
     })
     await expect(submit(input, [])).rejects.toThrow('病例提交失败')
     expect(openSession).not.toHaveBeenCalled()
+  })
+
+  it.each(['ready', 'rename', 'prompt', 'success'])('releases the cold Session reference after %s', async stage => {
+    const order: string[] = []
+    const ok = { ok: true as const, value: {} }
+    const failure = { ok: false as const, error: { message: 'rejected' } }
+    const session = {
+      rename: vi.fn(async () => { order.push('rename'); return stage === 'rename' ? failure : ok }),
+      prompt: vi.fn(async () => { order.push('prompt'); return stage === 'prompt' ? failure : ok }),
+    }
+    const current = 'selected-session' as SessionId
+    const create = vi.fn(async () => ({ ok: true, value: {} }))
+    const ctx = {
+      remote: { session: { create } },
+      sessions: {
+        list: { getSnapshot: () => ({ byId: { [current]: { id: current, retainedBy: { mainView: 1 } } } }) },
+        using: async (_id: SessionId, options: unknown, operation: (reference: unknown) => Promise<void>) => {
+          expect(options).toEqual({ source: 'controllerOperation' })
+          order.push('retain')
+          try {
+            await operation({ ready: stage === 'ready' ? Promise.reject(new Error('history unavailable')) : Promise.resolve({ session }) })
+          } finally { order.push('release') }
+        },
+      },
+      workspaces: { list: { getSnapshot: () => ({ items: [{ workspaceId: 'workspace-1', sessionIds: [current] }] }) } },
+      uiWorkspace: { openSession: vi.fn(() => { order.push('open') }) },
+    } as unknown as MedicalClientContext
+    const submission = new MedicalClientController(ctx).submitCase(input, [])
+    if (stage === 'success') await submission
+    else await expect(submission).rejects.toThrow()
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ workspaceId: 'workspace-1', agentPreset: 'medical' }))
+    expect(order[0]).toBe('retain')
+    expect(order.at(-1)).toBe('release')
+    expect(ctx.uiWorkspace.openSession).toHaveBeenCalledTimes(stage === 'success' ? 1 : 0)
+    expect(session.prompt).toHaveBeenCalledTimes(stage === 'success' || stage === 'prompt' ? 1 : 0)
   })
 
   it('serializes supported images beside the case text', async () => {

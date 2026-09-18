@@ -1,6 +1,6 @@
 # DSH Live Stats
 
-独立的 DeepSeek Harness 实时统计插件。Host 端通过 DSH `0.1.6-alpha.1` session projection 的 `stateSchema` 与 Client `wire` 注册从已提交 stream 重建的用量；Web Client 叠加 Session Controller 的 `assistant/live-chunk` 临时帧，显示轮次、步骤、LLM/工具耗时、TTFT、累计 token 和 TPS。缓存命中率由内置用量面板展示。当前步骤形成连续输出采样后，TPS 会随真实临时帧实时变化，结算后使用提供方用量校正累计值；新步骤尚无连续采样或提供方仅返回最终内容时，显示 DSH 已完成步骤的解码平均 TPS。
+独立的 DeepSeek Harness 实时统计插件。Host 端通过 DSH `0.1.6-alpha.2` session projection 的 `stateSchema` 与 Client `wire` 注册从已提交 stream 重建的用量；Web Client 叠加 Session Controller 的 `assistant/live-chunk` 临时帧，显示轮次、步骤、LLM/工具耗时、TTFT、累计 token 和 TPS。缓存命中率由内置用量面板展示。当前步骤形成连续输出采样后，TPS 会随真实临时帧实时变化，结算后使用提供方用量校正累计值；新步骤尚无连续采样或提供方仅返回最终内容时，显示 DSH 已完成步骤的解码平均 TPS。
 
 安装 `v0.1.0` 预构建包：
 
@@ -14,4 +14,4 @@ dsh plugin --profile web add https://github.com/Proton1917/dsh-harness-plugin/re
 dsh plugin --profile web add ./packages/live-stats
 ```
 
-当前源码面向 DSH `0.1.6-alpha.1`。`v0.1.0` 发布 tarball 仍面向 DSH `0.1.1-rc.2`，两套产物不能混装。
+当前源码面向 DSH `0.1.6-alpha.2`。`v0.1.0` 发布 tarball 仍面向 DSH `0.1.1-rc.2`，两套产物不能混装。
