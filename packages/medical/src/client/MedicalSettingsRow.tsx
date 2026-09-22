@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { SettingsScope } from '@deepseek-ai/dsh-client-ui-settings/client'
+import type { ConfigForm } from '@deepseek-ai/dsh-client-ui-settings/client'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import type { MedicalSettings } from '../types.ts'
@@ -11,7 +11,7 @@ export type MedicalRouteSettings = Pick<MedicalSettings, 'provider' | 'model' | 
 
 /** Data and write path injected into the General settings row. */
 export interface MedicalSettingsRowInjected {
-  settings: SettingsScope<MedicalSettings>
+  settings: ConfigForm<MedicalSettings>
   setEnabled: (enabled: boolean) => Promise<void>
   setRoute: (route: MedicalRouteSettings) => Promise<void>
 }

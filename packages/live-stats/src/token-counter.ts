@@ -44,11 +44,6 @@ function textOf(blocks: readonly ContentBlock[], counter: (text: string) => numb
           + `\`\`\`json\n${block.arguments}\n\`\`\`${SPECIAL.toolCallEnd}`,
         )
         break
-      case 'tool-result':
-        tokens += counter(SPECIAL.toolOutputBegin)
-          + textOf(block.content, counter)
-          + counter(SPECIAL.toolOutputEnd)
-        break
       default:
         tokens += counter(JSON.stringify(block))
     }
@@ -82,10 +77,12 @@ export function createTokenCounter(data: object, config: object): TokenCounter {
     countText,
     countAssistantOutput,
     countMessage(message) {
-      if (message.role === 'system') return textOf(message.content, countText)
-      if (message.source.kind === 'tool') {
+      if (message.role === 'system' || message.role === 'developer') return textOf(message.content, countText)
+      if (message.role === 'tool') {
         return countSpecial(SPECIAL.toolOutputsBegin)
+          + countSpecial(SPECIAL.toolOutputBegin)
           + textOf(message.content, countText)
+          + countSpecial(SPECIAL.toolOutputEnd)
           + countSpecial(SPECIAL.toolOutputsEnd)
       }
       if (message.role === 'assistant') {

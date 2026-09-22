@@ -36,7 +36,7 @@ dsh --profile web --dump-config
 
 ### Enable the Medical Agent Preset
 
-The medical package ships a separate preset installer because user Agent Presets live outside Profile dependencies. Install the package first, then run:
+The medical package ships a managed preset installer. On DSH 0.1.7-alpha.1 it generates a local declaration bundle and selects it in the Web Profile. Install the package first, then run:
 
 ```sh
 pnpm --dir "${DSH_HOME:-$HOME/.dsh}/profiles/web" exec dsh-medical-preset install
@@ -51,7 +51,7 @@ pnpm --dir "${DSH_HOME:-$HOME/.dsh}/profiles/web" exec dsh-medical-preset remove
 dsh plugin --profile web remove @proton1917/dsh-medical
 ```
 
-The installer updates or removes only a directory carrying its management marker. It refuses to overwrite or delete an unmanaged `medical` preset.
+The installer updates or removes only a directory carrying its management marker. It refuses to overwrite or delete an unmanaged `medical` preset. The generated private `@proton1917/dsh-medical-preset` bundle owns the fifth mode; it is not an additional published plugin. Removal deselects that bundle before deleting its managed files.
 
 ## Install from a checkout
 
@@ -81,7 +81,7 @@ The output supports medical education, research, and clinician-reviewed decision
 
 ## Compatibility
 
-The immutable `v0.1.0` release assets were built and verified for DSH `0.1.1-rc.2`. The current `main` source checkout targets DSH `0.1.6-alpha.2`, with exact development dependencies from npm. Install the `v0.1.0` tarballs with DSH `0.1.1-rc.2`; use the current source checkout with DSH `0.1.6-alpha.2`.
+The immutable `v0.1.0` release assets were built and verified for DSH `0.1.1-rc.2`. The current `main` source checkout targets DSH `0.1.7-alpha.1`, with exact development dependencies from npm. Install the `v0.1.0` tarballs with DSH `0.1.1-rc.2`; use the current source checkout with DSH `0.1.7-alpha.1`.
 
 ## Development
 

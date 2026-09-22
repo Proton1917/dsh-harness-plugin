@@ -1,5 +1,5 @@
 import type { Agent, ModelSelection } from '@deepseek-ai/dsh-agent'
-import type { AgentPresets } from '@deepseek-ai/dsh-agent-presets'
+import type { AgentPresetRegistry } from '@deepseek-ai/dsh-agent-preset-registry'
 import type {} from '@deepseek-ai/dsh-api-session-controller'
 import { ReasoningEffortId, type LlmCallConfig, type Message } from '@deepseek-ai/dsh-llm'
 import type { SessionTitleService } from '@deepseek-ai/dsh-session-title'
@@ -21,7 +21,7 @@ export function medicalRouteConfig(settings: MedicalSettings): LlmCallConfig {
 /** Whether an Agent currently runs the Medical Agent Preset. */
 export function isMedicalMode(
   agent: Agent,
-  agentPresets: Pick<AgentPresets, 'composedPreset'>,
+  agentPresets: Pick<AgentPresetRegistry, 'composedPreset'>,
 ): boolean {
   return agentPresets.composedPreset(agent.ctx) === MEDICAL_PRESET_ID
 }
@@ -54,7 +54,7 @@ export class MedicalModeCoordinator {
   /** @param currentSettings - latest persisted medical settings. */
   constructor(
     private readonly currentSettings: () => MedicalSettings,
-    private readonly agentPresets: Pick<AgentPresets, 'composedPreset'>,
+    private readonly agentPresets: Pick<AgentPresetRegistry, 'composedPreset'>,
     private readonly titles?: Pick<SessionTitleService, 'get' | 'rename'>,
   ) {}
 

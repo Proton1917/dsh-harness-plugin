@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import { createMessage, createUserMessage } from '@deepseek-ai/dsh-llm'
+import { createMessage, createUserMessage, createSystemMessage, createToolResultMessage, ToolCallId } from '@deepseek-ai/dsh-llm'
 import { AssistantStreamAccumulator } from '@deepseek-ai/dsh-llm/assistant-stream'
 import SessionStore from '@deepseek-ai/dsh-session'
 import type { Session } from '@deepseek-ai/dsh-session'
@@ -34,7 +34,7 @@ function stream() {
   return [...accumulator.snapshot()]
 }
 
-describe('v3 live usage', () => {
+describe('live usage', () => {
   it('uses official tokenizer counts and real delta timestamps', () => {
     expect(counter.countText('ok')).toBe(1)
     expect(sampleLiveChunks(chunks.slice(0, 1), counter).tokensPerSecond).toBeUndefined()
@@ -66,13 +66,13 @@ describe('v3 live usage', () => {
     expect(frames.length).toBeGreaterThan(1)
   })
 
-  it('counts v3 system messages and seq-based surface replacements', async () => {
+  it('counts system messages and seq-based surface replacements', async () => {
     const { ctx, session } = await harness()
     const user = (text: string) => createUserMessage({ content: [{ type: 'text', text }], source: { kind: 'user' } })
     const first = session.append('user/message', user('old'), { surfaceOp: 'append' })
     session.append('user/message', user('replacement'), { surfaceOp: { op: 'replace', startSeq: first.seq, endSeq: first.seq }, sourceEventSeqs: [first.seq] })
     session.append('step/start', { turn: 1, step: 1 })
-    const system = createMessage({ role: 'system' as const, content: [{ type: 'text' as const, text: 'medical instructions' }], source: { kind: 'plugin' as const, plugin: 'test' } })
+    const system = createSystemMessage('medical instructions')
     session.append('system/message', { turn: 1, step: 1, message: system }, { surfaceOp: 'append' })
     expect(projected(ctx, session).uncachedInputTokens).toBe(counter.countMessage(user('replacement')) + counter.countText('medical instructions'))
   })
@@ -86,4 +86,16 @@ describe('v3 live usage', () => {
     session.append('turn/end', { turn: 1, reason: { kind: 'aborted' } })
     expect(projected(ctx, session)).toMatchObject({ outputTokens: 0, estimated: false })
   })
+  it('counts developer changes and first-class tool results in subsequent input', async () => {
+    const { ctx, session } = await harness()
+    const developer = createMessage({ role: 'developer', content: [{ type: 'text', text: 'Updated instructions' }], source: { kind: 'plugin', plugin: 'test' } })
+    const tool = createToolResultMessage({ callId: ToolCallId('call-1'), content: [{ type: 'text', text: 'Tool output' }], isError: false })
+    session.append('developer/message', { turn: 1, step: 1, message: developer }, { surfaceOp: 'append' })
+    session.append('tool/result', { turn: 1, step: 1, message: tool }, { surfaceOp: 'append' })
+    session.append('step/start', { turn: 1, step: 2 })
+    expect(counter.countMessage(developer)).toBe(counter.countText('Updated instructions'))
+    expect(counter.countMessage(tool)).toBeGreaterThan(counter.countText('Tool output'))
+    expect(projected(ctx, session).uncachedInputTokens).toBe(counter.countMessage(developer) + counter.countMessage(tool))
+  })
+
 })

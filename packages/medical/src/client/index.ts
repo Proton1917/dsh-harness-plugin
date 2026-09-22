@@ -22,7 +22,7 @@ export { MEDICAL_STYLES } from './styles.ts'
 
 /** Client services required by the medical settings and launcher surfaces. */
 export const inject = [
-  'slots', 'locale', 'settingsScope', 'remote',
+  'slots', 'locale', 'configForms', 'remote',
   'sessions', 'workspaces', 'uiWorkspace',
 ]
 
@@ -33,16 +33,21 @@ export function apply(ctx: ClientContext): void {
     () => ctx.locale.register(MEDICAL_LOCALE_NAMESPACE, { zh, en }),
     'medical: dictionaries',
   )
-  const settings = ctx.settingsScope.bind<MedicalSettings>({ namespace: 'medical' })
+  const settings = ctx.configForms.get<MedicalSettings>('medical')
   const client = ctx as unknown as MedicalClientContext
   const controller = new MedicalClientController(client)
   const injected = () => ({
     settings,
-    setEnabled: (enabled: boolean) => settings.set('enabled', enabled),
+    setEnabled: async (enabled: boolean) => {
+      if (!await settings.set('enabled', enabled)) throw new Error('Medical settings write refused')
+    },
     setRoute: async (route: MedicalRouteSettings) => {
-      await settings.set('provider', route.provider)
-      await settings.set('model', route.model)
-      await settings.set('reasoningEffort', route.reasoningEffort)
+      const accepted = await settings.mutate([
+        { op: 'set', path: ['provider'], value: route.provider },
+        { op: 'set', path: ['model'], value: route.model },
+        { op: 'set', path: ['reasoningEffort'], value: route.reasoningEffort },
+      ])
+      if (!accepted) throw new Error('Medical route write refused')
     },
     submitCase: async (
       input: Parameters<MedicalClientController['submitCase']>[0],

@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import type { SettingsScope, SettingsScopeSnapshot } from '@deepseek-ai/dsh-client-ui-settings/client'
+import type { ConfigForm, ConfigFormSnapshot } from '@deepseek-ai/dsh-client-ui-settings/client'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MedicalLauncher } from '../src/client/MedicalLauncher.tsx'
@@ -19,8 +19,8 @@ const t = ((key: keyof typeof zh, params: Record<string, string | number> = {}):
   return value
 }) as TranslateNS<typeof MEDICAL_LOCALE_NAMESPACE>
 
-function settingsScope(enabled: boolean): SettingsScope<MedicalSettings> {
-  const snapshot: SettingsScopeSnapshot<MedicalSettings> = {
+function configForms(enabled: boolean): ConfigForm<MedicalSettings> {
+  const snapshot: ConfigFormSnapshot<MedicalSettings> = {
     status: 'ready',
     value: {
       enabled,
@@ -37,8 +37,9 @@ function settingsScope(enabled: boolean): SettingsScope<MedicalSettings> {
   return {
     getSnapshot: () => snapshot,
     subscribe: () => () => {},
-    set: async () => {},
-    unset: async () => {},
+    set: async () => true,
+    mutate: async () => true,
+    unset: async () => true,
   }
 }
 
@@ -48,7 +49,7 @@ describe('medical settings and case desk', () => {
     const setRoute = vi.fn(async () => {})
     render(
       <MedicalSettingsRow
-        settings={settingsScope(false)}
+        settings={configForms(false)}
         setEnabled={setEnabled}
         setRoute={setRoute}
         t={t}
@@ -73,7 +74,7 @@ describe('medical settings and case desk', () => {
   })
 
   it('opens the de-identification desk and validates required case fields', () => {
-    render(<MedicalLauncher wide settings={settingsScope(true)} submitCase={vi.fn()} t={t} />)
+    render(<MedicalLauncher wide settings={configForms(true)} submitCase={vi.fn()} t={t} />)
     fireEvent.click(screen.getByRole('button', { name: '打开医学病例分析' }))
     expect(screen.getByRole('dialog', { name: '临床推演室' })).toBeTruthy()
     expect(screen.getByText('提交前去标识化')).toBeTruthy()
@@ -86,7 +87,7 @@ describe('medical settings and case desk', () => {
 
   it('submits the selected template and closes after acceptance', async () => {
     const submitCase = vi.fn(async () => {})
-    render(<MedicalLauncher wide settings={settingsScope(true)} submitCase={submitCase} t={t} />)
+    render(<MedicalLauncher wide settings={configForms(true)} submitCase={submitCase} t={t} />)
     fireEvent.click(screen.getByRole('button', { name: '打开医学病例分析' }))
     fireEvent.change(screen.getByLabelText('主诉 *'), { target: { value: '腹痛 6 小时' } })
     fireEvent.change(screen.getByLabelText('现病史 *'), { target: { value: '右下腹持续痛' } })
@@ -104,7 +105,7 @@ describe('medical settings and case desk', () => {
 
   it('preserves an attached image beside structured case fields', async () => {
     const submitCase = vi.fn(async () => {})
-    render(<MedicalLauncher wide settings={settingsScope(true)} submitCase={submitCase} t={t} />)
+    render(<MedicalLauncher wide settings={configForms(true)} submitCase={submitCase} t={t} />)
     fireEvent.click(screen.getByRole('button', { name: '打开医学病例分析' }))
     fireEvent.change(screen.getByLabelText('主诉 *'), { target: { value: '心悸 2 小时' } })
     fireEvent.change(screen.getByLabelText('现病史 *'), { target: { value: '突发持续心悸' } })
@@ -118,7 +119,7 @@ describe('medical settings and case desk', () => {
   })
 
   it('keeps the launcher discoverable while disabled but removes submission', () => {
-    render(<MedicalLauncher wide settings={settingsScope(false)} submitCase={vi.fn()} t={t} />)
+    render(<MedicalLauncher wide settings={configForms(false)} submitCase={vi.fn()} t={t} />)
     fireEvent.click(screen.getByRole('button', { name: '打开医学病例分析' }))
     expect(screen.getByText('医学插件当前已关闭')).toBeTruthy()
     expect(screen.queryByRole('button', { name: '创建病例会话并分析' })).toBeNull()

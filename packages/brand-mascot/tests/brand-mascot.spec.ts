@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
-import type { AgentPresets } from '@deepseek-ai/dsh-agent-presets'
+import type { AgentPresetRegistry } from '@deepseek-ai/dsh-agent-preset-registry'
 import { Context } from '@deepseek-ai/cordis'
 import SystemPrompt, { renderPrompt } from '@deepseek-ai/dsh-system-prompt'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -133,7 +133,7 @@ describe('brand mascot Host persona', () => {
     const dispose = vi.fn()
     const section = vi.fn(() => dispose)
     let preset = 'minimal'
-    const agentPresets: Pick<AgentPresets, 'composedPreset'> = { composedPreset: () => preset }
+    const agentPresets: Pick<AgentPresetRegistry, 'composedPreset'> = { composedPreset: () => preset }
     const agent = {
       ctx: {
         systemPrompt: { section, getSectionOrder: (name: string) => name === placement ? 0 : undefined },
@@ -158,7 +158,7 @@ describe('brand mascot Host persona', () => {
 
   it('does not install a complete persona override for Medical mode', () => {
     const section = vi.fn()
-    const agentPresets: Pick<AgentPresets, 'composedPreset'> = {
+    const agentPresets: Pick<AgentPresetRegistry, 'composedPreset'> = {
       composedPreset: () => 'medical',
     }
     const agent = {

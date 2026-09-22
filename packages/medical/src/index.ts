@@ -1,6 +1,5 @@
-import type { Context } from '@deepseek-ai/cordis'
-import type z from 'schemastery'
-import schema from 'schemastery'
+import type { Context, Volatile } from '@deepseek-ai/cordis'
+import schema from '@deepseek-ai/schemastery'
 import type {} from '@deepseek-ai/dsh-settings'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import type {} from '@deepseek-ai/dsh-tools'
@@ -25,38 +24,29 @@ export const DEFAULT_MEDICAL_SETTINGS: MedicalSettings = Object.freeze({
 })
 
 /** Plugin configuration and user-settings schema. */
-export type Config = MedicalSettings
+export type Config = { [K in keyof MedicalSettings]: Volatile<MedicalSettings[K]> }
 
 /** Runtime schema for the medical plugin settings. */
-export const Config: z<Config> = schema.object({
-  enabled: schema.boolean().default(false).description('允许结构化医学分析和医学模式中的新请求'),
-  provider: schema.string().default(DEFAULT_MEDICAL_SETTINGS.provider).description('医学分析使用的 LLM provider'),
-  model: schema.string().default(DEFAULT_MEDICAL_SETTINGS.model).description('医学分析使用的模型'),
-  reasoningEffort: schema.string().default(DEFAULT_MEDICAL_SETTINGS.reasoningEffort).description('医学分析使用的推理强度'),
+export const Config = schema.object({
+  enabled: schema.boolean().default(false).volatile().description('允许结构化医学分析和医学模式中的新请求'),
+  provider: schema.string().pattern(/\S/).default(DEFAULT_MEDICAL_SETTINGS.provider).volatile().description('医学分析使用的 LLM provider'),
+  model: schema.string().pattern(/\S/).default(DEFAULT_MEDICAL_SETTINGS.model).volatile().description('医学分析使用的模型'),
+  reasoningEffort: schema.string().pattern(/\S/).default(DEFAULT_MEDICAL_SETTINGS.reasoningEffort).volatile().description('医学分析使用的推理强度'),
 })
 
 /** Services required by persistent Medical-mode routing. */
 export const inject = ['agents', 'agentPresets', 'sessionTitle']
 
 /** Register medical settings and persistent Medical-mode routing. */
-export function apply(ctx: Context, config: Config = DEFAULT_MEDICAL_SETTINGS): void {
-  const entry: MedicalSettings = Object.freeze({
-    enabled: config.enabled ?? DEFAULT_MEDICAL_SETTINGS.enabled,
-    provider: config.provider ?? DEFAULT_MEDICAL_SETTINGS.provider,
-    model: config.model ?? DEFAULT_MEDICAL_SETTINGS.model,
-    reasoningEffort: config.reasoningEffort ?? DEFAULT_MEDICAL_SETTINGS.reasoningEffort,
+export function apply(ctx: Context, config: Config): void {
+  const currentSettings = (): MedicalSettings => ({
+    enabled: config.enabled.get(),
+    provider: config.provider.get(),
+    model: config.model.get(),
+    reasoningEffort: config.reasoningEffort.get(),
   })
-  let currentSettings = (): MedicalSettings => entry
-  ctx.inject(['settings'], (settingsCtx) => {
-    settingsCtx.settings.installSection(ctx, MEDICAL_SETTINGS_NAMESPACE, Config, entry, {
-      setSource: (current) => { currentSettings = current },
-      onChange: () => {},
-      validate: (value) => {
-        if (value.provider.trim() === '') throw new Error('medical provider must not be empty')
-        if (value.model.trim() === '') throw new Error('medical model must not be empty')
-        if (value.reasoningEffort.trim() === '') throw new Error('medical reasoningEffort must not be empty')
-      },
-    })
+  ctx.inject(['settings'], (child) => {
+    child.effect(() => child.settings.configure({ auto: false }, ctx.fiber))
   })
 
   const medicalMode = new MedicalModeCoordinator(

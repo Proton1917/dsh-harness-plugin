@@ -36,7 +36,7 @@ dsh --profile web --dump-config
 
 ### 启用医学 Agent Preset
 
-用户 Agent Preset 不属于 Profile 依赖，因此医学包附带独立的 Preset 安装命令。安装医学包后运行：
+医学包附带受管 Preset 安装命令。在 DSH 0.1.7-alpha.1 上，脚本生成本地声明 Bundle 并装入 Web Profile。安装医学包后运行：
 
 ```sh
 pnpm --dir "${DSH_HOME:-$HOME/.dsh}/profiles/web" exec dsh-medical-preset install
@@ -51,7 +51,7 @@ pnpm --dir "${DSH_HOME:-$HOME/.dsh}/profiles/web" exec dsh-medical-preset remove
 dsh plugin --profile web remove @proton1917/dsh-medical
 ```
 
-安装程序只更新或删除带有自身管理标记的目录。遇到非本插件管理的同名 `medical` Preset 时，它会拒绝覆盖或删除。
+安装程序只更新或删除带有自身管理标记的目录。遇到非本插件管理的同名 `medical` Preset 时，它会拒绝覆盖或删除。生成的私有 `@proton1917/dsh-medical-preset` Bundle 承载第五模式，不是额外发布的插件；卸载时先移除 Bundle，再删除受管文件。
 
 ## 从源码安装
 
@@ -81,7 +81,7 @@ workspace 根目录不是 DSH Bundle，不能作为第五个包安装。
 
 ## 兼容性
 
-不可变的 `v0.1.0` 发布资产面向 DSH `0.1.1-rc.2` 构建并完成验证。当前 `main` 源码面向 DSH `0.1.6-alpha.2`，开发依赖固定使用 npm 的精确版本。DSH `0.1.1-rc.2` 请使用 `v0.1.0` tarball；DSH `0.1.6-alpha.2` 请使用当前源码。
+不可变的 `v0.1.0` 发布资产面向 DSH `0.1.1-rc.2` 构建并完成验证。当前 `main` 源码面向 DSH `0.1.7-alpha.1`，开发依赖固定使用 npm 的精确版本。DSH `0.1.1-rc.2` 请使用 `v0.1.0` tarball；DSH `0.1.7-alpha.1` 请使用当前源码。
 
 ## 开发
 

@@ -2,7 +2,7 @@ import {
   useEffect, useId, useRef, useState, type ChangeEvent, type FormEvent, type MouseEvent,
 } from 'react'
 import { createPortal } from 'react-dom'
-import type { SettingsScope } from '@deepseek-ai/dsh-client-ui-settings/client'
+import type { ConfigForm } from '@deepseek-ai/dsh-client-ui-settings/client'
 import type { PropsLocale, PropsRuntime, TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type { MedicalAnalysisMode, MedicalCaseInput, MedicalSettings } from '../types.ts'
@@ -12,7 +12,7 @@ import { useMedicalSettings } from './settings.ts'
 
 /** Data and submission path injected into the sidebar launcher. */
 export interface MedicalLauncherInjected {
-  settings: SettingsScope<MedicalSettings>
+  settings: ConfigForm<MedicalSettings>
   submitCase: (input: MedicalCaseInput, images: readonly File[]) => Promise<void>
 }
 

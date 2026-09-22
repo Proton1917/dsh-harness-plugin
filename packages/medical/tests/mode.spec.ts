@@ -1,6 +1,6 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
-import type { AgentPresets } from '@deepseek-ai/dsh-agent-presets'
+import type { AgentPresetRegistry } from '@deepseek-ai/dsh-agent-preset-registry'
 import type { LlmCallConfig, Message } from '@deepseek-ai/dsh-llm'
 import { describe, expect, it, vi } from 'vitest'
 import { MedicalModeCoordinator } from '../src/mode.ts'
@@ -15,13 +15,13 @@ const settings: MedicalSettings = {
 
 interface ModeHarness {
   agent: Agent
-  agentPresets: Pick<AgentPresets, 'composedPreset'>
+  agentPresets: Pick<AgentPresetRegistry, 'composedPreset'>
   append: ReturnType<typeof vi.fn>
   select: (id: string) => void
 }
 
 const testPresetByContext = new WeakMap<Context, string>()
-const testAgentPresets: Pick<AgentPresets, 'composedPreset'> = {
+const testAgentPresetRegistry: Pick<AgentPresetRegistry, 'composedPreset'> = {
   composedPreset: context => testPresetByContext.get(context),
 }
 
@@ -46,7 +46,7 @@ function modeAgent(id: string): ModeHarness {
   } as unknown as Agent
   return {
     agent,
-    agentPresets: testAgentPresets,
+    agentPresets: testAgentPresetRegistry,
     append,
     select: (next) => {
       preset = next

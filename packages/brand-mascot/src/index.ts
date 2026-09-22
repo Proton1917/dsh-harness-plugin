@@ -1,6 +1,6 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
-import type { AgentPresets } from '@deepseek-ai/dsh-agent-presets'
+import type { AgentPresetRegistry } from '@deepseek-ai/dsh-agent-preset-registry'
 import { PERSONA_PREFIX_SECTION } from '@deepseek-ai/dsh-system-prompt'
 
 /** Services required by the model-facing brand persona. */
@@ -30,7 +30,7 @@ export class WhalePersonaCoordinator {
   private readonly minimal = new Map<Agent, () => void>()
 
   /** @param agentPresets - roster service injected into the owning plugin context. */
-  constructor(private readonly agentPresets: Pick<AgentPresets, 'composedPreset'>) {}
+  constructor(private readonly agentPresets: Pick<AgentPresetRegistry, 'composedPreset'>) {}
 
   /** Install or retract the exact-Agent Minimal persona after preset changes. */
   sync(agent: Agent): void {

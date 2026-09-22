@@ -18,7 +18,7 @@ dsh plugin --profile web add ./packages/medical
 pnpm --dir "${DSH_HOME:-$HOME/.dsh}/profiles/web" exec dsh-medical-preset install
 ```
 
-同步命令把 `packages/medical/agent-presets/medical/` 写入 `${DSH_HOME:-$HOME/.dsh}/.agent-presets/medical/`。目标带有插件管理标记；脚本只更新自己管理的目录，发现同名但非本插件管理的 preset 时会拒绝覆盖。Preset roster 每次读取目录，正常情况下不需要重启即可看到排序第 5 的“医学模式”。
+同步命令把 `packages/medical/agent-presets/medical/` 写入 `${DSH_HOME:-$HOME/.dsh}/.agent-presets/medical/`。目标带有插件管理标记；脚本只更新自己管理的目录，发现同名但非本插件管理的 preset 时会拒绝覆盖。脚本生成私有 `@proton1917/dsh-medical-preset` Bundle，通过官方 CLI 安装到 Web Profile；其 `preset-medical` 声明由 `dsh-agent-preset` 注册为第五模式。它是受管运行配置，不是第五个发布插件；卸载时先移除 Bundle，再删除受管目录。
 
 安装后医学请求保持关闭。在 Harness Web 的设置 → 通用中配置 Provider ID、Model ID 和推理强度，再打开“医学病例分析”。关闭开关后，新请求被拒绝，已经进入 Agent Loop 的请求继续完成。
 
@@ -50,7 +50,7 @@ dsh plugin --profile web remove @proton1917/dsh-medical
 
 ## 医学模式数据流
 
-1. Agent Preset roster 从 `${DSH_HOME:-$HOME/.dsh}/.agent-presets/medical/` 读取 `preset.yml` 和 `agent.cordis.yml`，因此它与标准、PTC、极简、创造模式处于同一个官方菜单。
+1. 同步脚本将 `preset.yml` 的展示字段和 `agent.cordis.yml` 的子插件列表转换为受管 Bundle 中的 `dsh-agent-preset` 声明，由 Preset Registry 装载为第五模式。
 2. 用户选择医学模式时，DSH 通过标准 `agent-preset/selected` 事件把选择写入会话日志；插件只对当前解析结果为 `medical` 的 Agent 写入医学路由的 `model/selection`，客户端模型控件直接读取这份会话级投影。离开医学模式时，同一事件恢复原先路由。
 3. Preset 装入完整医学系统提示、抑制运行时编码上下文，并通过工具白名单和执行 guard 双层限制全部工具；不添加步骤或轮次门禁。
 4. 同一会话的后续用户消息继续携带既有医学对话历史，并沿用相同医学请求头，使提供方可以复用稳定前缀缓存。用户消息不做本地重写；提示要求模型自行整理时间线、合并重复信息、并列矛盾描述，并把无法确定的字段列为待补充。
@@ -66,7 +66,7 @@ dsh plugin --profile web remove @proton1917/dsh-medical
 | `model` | `anthropic/claude-fable-5.1` |
 | `reasoningEffort` | `high` |
 
-路由可在设置 → 通用中修改。插件不设置 `maxTokens`、温度或重试次数，适配器和部署已有的上限继续生效。使用图片时，部署必须把该模型的输入能力声明为 `text` 与 `image`；`anthropic / anthropic/claude-fable-5.1` 通过本机 OpenRouter 路由并严格锁定 Anthropic provider。
+路由可在设置 → 通用中修改。Host 从 Config 的 volatile 引用读取当前值，Client 通过 ConfigForm 将 Provider、Model 和推理强度作为一次修改提交到 Profile；被拒绝的修改不会显示为保存成功。插件不设置 `maxTokens`、温度或重试次数，适配器和部署已有的上限继续生效。使用图片时，部署必须把该模型的输入能力声明为 `text` 与 `image`；`anthropic / anthropic/claude-fable-5.1` 通过本机 OpenRouter 路由并严格锁定 Anthropic provider。
 
 ## 医学输出规则
 

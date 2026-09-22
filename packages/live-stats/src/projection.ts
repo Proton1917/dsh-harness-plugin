@@ -152,6 +152,7 @@ function surfaceMessage(event: SurfaceEvent): Message {
     case 'user/message':
       return event.data
     case 'system/message':
+    case 'developer/message':
     case 'assistant/message':
     case 'tool/result':
       return event.data.message
@@ -400,15 +401,15 @@ export function createLiveTokenUsageProjectionDefinition(
         }
       }
 
-      if (event.type === 'system/message' || event.type === 'user/message' || event.type === 'assistant/message' || event.type === 'tool/result') {
+      if (event.type === 'system/message' || event.type === 'developer/message' || event.type === 'user/message' || event.type === 'assistant/message' || event.type === 'tool/result') {
         next = { ...next, ...applySurface(next, event, counter) }
-        if ((event.type === 'system/message' || event.type === 'user/message') && next.active !== null && !next.active.exact) {
+        if ((event.type === 'system/message' || event.type === 'developer/message' || event.type === 'user/message') && next.active !== null && !next.active.exact) {
           next = { ...next, active: { ...next.active, buckets: { ...next.active.buckets, uncachedInputTokens: counter.countHeader(next.header) + next.surfaceTokens } } }
         }
       }
       return next
     },
     wire: { viewSchema: projectionSchema, view },
-    stateVersion: 4,
+    stateVersion: 5,
   } satisfies ProjectionDefinition<'liveTokenUsage', State>
 }
