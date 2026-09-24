@@ -36,7 +36,7 @@ dsh --profile web --dump-config
 
 ### Enable the Medical Agent Preset
 
-The medical package ships a managed preset installer. On DSH 0.1.7-alpha.1 it generates a local declaration bundle and selects it in the Web Profile. Install the package first, then run:
+The medical package ships a managed preset installer. On DSH 0.1.7-rc.1 it generates a local declaration bundle and selects it in the Web Profile. Install the package first, then run:
 
 ```sh
 pnpm --dir "${DSH_HOME:-$HOME/.dsh}/profiles/web" exec dsh-medical-preset install
@@ -81,7 +81,7 @@ The output supports medical education, research, and clinician-reviewed decision
 
 ## Compatibility
 
-The immutable `v0.1.0` release assets were built and verified for DSH `0.1.1-rc.2`. The current `main` source checkout targets DSH `0.1.7-alpha.1`, with exact development dependencies from npm. Install the `v0.1.0` tarballs with DSH `0.1.1-rc.2`; use the current source checkout with DSH `0.1.7-alpha.1`.
+The immutable `v0.1.0` release assets were built and verified for DSH `0.1.1-rc.2`. The current `main` source checkout targets DSH `0.1.7-rc.1`, with exact development dependencies from npm. Install the `v0.1.0` tarballs with DSH `0.1.1-rc.2`; use the current source checkout with DSH `0.1.7-rc.1`.
 
 ## Development
 
