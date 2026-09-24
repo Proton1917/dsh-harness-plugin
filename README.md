@@ -89,10 +89,13 @@ The immutable `v0.1.0` release assets were built and verified for DSH `0.1.1-rc.
 pnpm install
 pnpm run ci
 pnpm run pack:check
+pnpm audit
 git diff --check
 ```
 
 `pnpm run ci` runs package type checks, unit tests, and builds. `pnpm run pack:check` inspects the files shipped by every tarball. User-visible changes also require validation in the real Harness Web application.
+
+Dependency maintenance includes `pnpm audit` across production and development dependencies. The scoped overrides in `pnpm-workspace.yaml` select security patches for the pinned DSH assembly and LibreOffice dependency.
 
 ## Brand and licenses
 

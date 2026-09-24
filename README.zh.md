@@ -89,10 +89,13 @@ workspace 根目录不是 DSH Bundle，不能作为第五个包安装。
 pnpm install
 pnpm run ci
 pnpm run pack:check
+pnpm audit
 git diff --check
 ```
 
 `pnpm run ci` 运行各包的类型检查、单元测试和构建。`pnpm run pack:check` 检查每个 tarball 的实际文件。涉及界面的改动还需要在真实 Harness Web 中确认。
+
+依赖维护使用 `pnpm audit` 检查生产和开发依赖。`pnpm-workspace.yaml` 中限定版本或父包的 override 为固定的 DSH 兼容依赖与 LibreOffice 依赖选择安全补丁。
 
 ## 品牌与许可证
 
