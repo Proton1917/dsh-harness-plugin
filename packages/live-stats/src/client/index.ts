@@ -23,14 +23,26 @@ export { TpsLine, formatTokensPerSecond } from './TpsLine.tsx'
 /** Client services required by the composer dock contribution. */
 export const inject = ['slots', 'conversation', 'locale', 'sessions']
 
+/**
+ * Keep both statistics lines in one item of the composer's horizontal dock.
+ * @param props - Session projections, transient usage and localized text.
+ * @returns Vertically stacked usage and throughput lines.
+ */
+export function LiveStatsDock(props: TpsLineProps) {
+  return createElement('div', {
+    'data-dsh-live-stats': '',
+    style: { display: 'flex', flexDirection: 'column', flex: '1 1 auto', minWidth: 0, maxWidth: 'var(--dsh-chat-content-width)' },
+  }, createElement(LiveStatsLine, props), createElement(TpsLine, props))
+}
+
 /** Install the live statistics rows. */
 export function apply(ctx: ClientContext): void {
-  const wrap = (Component: typeof TpsLine) => function LiveRow(props: TpsLineProps & { sessionId: SessionId }) {
+  function LiveRow(props: TpsLineProps & { sessionId: SessionId }) {
     const binding = (ctx as unknown as { sessions: ISessions }).sessions.binding(props.sessionId)
     if (binding === undefined) throw new Error('live-stats: Session binding is unavailable')
     const durable = props.useProjection('liveTokenUsage')
     const liveUsage = useLiveUsage(binding.eventSource, durable)
-    return createElement(Component, { ...props, liveUsage })
+    return createElement(LiveStatsDock, { ...props, liveUsage })
   }
   ctx.effect(
     () => ctx.locale.register(LIVE_STATS_NS, { zh, en }),
@@ -42,11 +54,5 @@ export function apply(ctx: ClientContext): void {
     order: 0,
     priority: -1,
     locale: LIVE_STATS_NS,
-  }, wrap(LiveStatsLine)))
-  ctx.slots.inject('conversation.composer.dock', () => ctx.slots.register({
-    name: 'conversation.composer.dock',
-    id: 'live-tps',
-    order: 1,
-    locale: LIVE_STATS_NS,
-  }, wrap(TpsLine)))
+  }, LiveRow))
 }

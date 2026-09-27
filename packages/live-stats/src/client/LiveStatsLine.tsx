@@ -16,9 +16,6 @@ const ROW_STYLE = {
   fontSize: '12px',
   justifyContent: 'center',
   lineHeight: '20px',
-  margin: '0 auto',
-  maxWidth: 'var(--dsh-chat-content-width)',
-  padding: '0 var(--dsh-composer-side-clearance)',
   width: '100%',
 } as const
 

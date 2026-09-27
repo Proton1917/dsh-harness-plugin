@@ -155,20 +155,14 @@ describe('plugin-owned statistics row', () => {
     } as unknown as ClientContext
     apply(ctx)
     expect(registerLocale).toHaveBeenCalledWith(LIVE_STATS_NS, expect.any(Object))
-    expect(injectSlot).toHaveBeenCalledTimes(2)
+    expect(injectSlot).toHaveBeenCalledTimes(1)
+    expect(register).toHaveBeenCalledTimes(1)
     expect(injectSlot).toHaveBeenNthCalledWith(1, 'conversation.composer.dock', expect.any(Function))
-    expect(injectSlot).toHaveBeenNthCalledWith(2, 'conversation.composer.dock', expect.any(Function))
     expect(register.mock.calls[0]?.[0]).toMatchObject({
       name: 'conversation.composer.dock',
       id: 'stats',
       order: 0,
       priority: -1,
-      locale: LIVE_STATS_NS,
-    })
-    expect(register.mock.calls[1]?.[0]).toMatchObject({
-      name: 'conversation.composer.dock',
-      id: 'live-tps',
-      order: 1,
       locale: LIVE_STATS_NS,
     })
     for (const dispose of effects.reverse()) dispose()
