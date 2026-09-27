@@ -9,7 +9,7 @@ import type { MedicalSettings } from './types.ts'
 /** Stable id of the direct-submission Agent Preset. */
 export const MEDICAL_PRESET_ID = 'medical'
 
-/** Exact Fable route used by structured turns and the Medical Agent Preset. */
+/** Exact configured route used by structured turns and the Medical Agent Preset. */
 export function medicalRouteConfig(settings: MedicalSettings): LlmCallConfig {
   return {
     provider: settings.provider,
@@ -46,7 +46,7 @@ function selectedRoute(agent: Agent): ModelSelection | undefined {
   }
 }
 
-/** Keep the Medical Agent Preset on Fable without changing other presets. */
+/** Keep the Medical Agent Preset on its configured route without changing other presets. */
 export class MedicalModeCoordinator {
   private readonly original = new Map<Agent, ModelSelection | undefined>()
   private readonly restoring = new Map<Agent, ModelSelection>()
@@ -105,7 +105,7 @@ export class MedicalModeCoordinator {
     }
   }
 
-  /** Route every user turn in Medical mode through the configured Fable route. */
+  /** Route every user turn in Medical mode through the configured route. */
   async routeRequest(agent: Agent, next: () => Promise<LlmCallConfig>): Promise<LlmCallConfig> {
     const resolved = await next()
     if (!isMedicalMode(agent, this.agentPresets)) {

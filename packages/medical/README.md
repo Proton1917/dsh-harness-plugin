@@ -41,7 +41,7 @@ dsh plugin --profile web remove @proton1917/dsh-medical
 ## 结构化病例数据流
 
 1. Client 通过官方 `session.create` 创建全新 `medical` Agent Preset 会话；优先沿用当前会话所属 Workspace，当前会话不属于 Workspace 时创建未分组会话，不猜测其他最近使用的 Workspace。
-2. 插件在会话创建时通过 `model/selection` 记录医学路由；客户端模型控件读取这份会话级投影。实际 `request/header` 由 Agent Loop 在已开始的回合内写入，插件不调用会写回全局默认模型的 `session.selectModel`。默认路由为 `anthropic / anthropic/claude-fable-5.1 / high`。
+2. 插件在会话创建时通过 `model/selection` 记录医学路由；客户端模型控件读取这份会话级投影。实际 `request/header` 由 Agent Loop 在已开始的回合内写入，插件不调用会写回全局默认模型的 `session.selectModel`。默认路由为 `anthropic / anthropic/claude-opus-5.5 / medium`。
 3. Client 通过 `sessions.using()` 持有会话引用并等待初始历史就绪，在提交成功或失败后释放；成功后的页面导航由 `uiWorkspace.openSession()` 接管引用。Client 在病例消息前写入 `医学病例 · <主诉摘要>` 确定性标题。标题写入失败则停止，不调用标题模型，也不打开失败会话。
 4. Client 通过标准 `SessionFace.prompt` 提交结构化文本和可选原图；附件服务保存图片字节，Session Log 保存标准引用。Prompt 被接受后才打开病例会话。
 5. Preset 装入完整医学系统提示、抑制运行时编码上下文，并通过工具白名单和执行 guard 双层限制全部工具；不添加步骤或轮次门禁。
@@ -63,10 +63,10 @@ dsh plugin --profile web remove @proton1917/dsh-medical
 |---|---|
 | `enabled` | `false` |
 | `provider` | `anthropic` |
-| `model` | `anthropic/claude-fable-5.1` |
-| `reasoningEffort` | `high` |
+| `model` | `anthropic/claude-opus-5.5` |
+| `reasoningEffort` | `medium` |
 
-路由可在设置 → 通用中修改。Host 从 Config 的 volatile 引用读取当前值，Client 通过 ConfigForm 将 Provider、Model 和推理强度作为一次修改提交到 Profile；被拒绝的修改不会显示为保存成功。插件不设置 `maxTokens`、温度或重试次数，适配器和部署已有的上限继续生效。使用图片时，部署必须把该模型的输入能力声明为 `text` 与 `image`；`anthropic / anthropic/claude-fable-5.1` 通过本机 OpenRouter 路由并严格锁定 Anthropic provider。
+路由可在设置 → 通用中修改。Host 从 Config 的 volatile 引用读取当前值，Client 通过 ConfigForm 将 Provider、Model 和推理强度作为一次修改提交到 Profile；被拒绝的修改不会显示为保存成功。插件不设置 `maxTokens`、温度或重试次数，适配器和部署已有的上限继续生效。使用图片时，部署必须把该模型的输入能力声明为 `text` 与 `image`；`anthropic / anthropic/claude-opus-5.5` 通过本机 OpenRouter 路由并严格锁定 Anthropic provider。
 
 ## 医学输出规则
 

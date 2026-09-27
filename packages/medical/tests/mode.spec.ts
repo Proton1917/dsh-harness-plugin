@@ -9,8 +9,8 @@ import type { MedicalSettings } from '../src/types.ts'
 const settings: MedicalSettings = {
   enabled: true,
   provider: 'anthropic',
-  model: 'anthropic/claude-fable-5.1',
-  reasoningEffort: 'high',
+  model: 'anthropic/claude-opus-5.5',
+  reasoningEffort: 'medium',
 }
 
 interface ModeHarness {
@@ -56,7 +56,7 @@ function modeAgent(id: string): ModeHarness {
 }
 
 describe('Medical Agent Preset routing', () => {
-  it('pins the Fable selection and deterministic title before the first step enters the log', () => {
+  it('pins the Opus selection and deterministic title before the first step enters the log', () => {
     const harness = modeAgent('medical')
     const rename = vi.fn()
     const coordinator = new MedicalModeCoordinator(() => settings, harness.agentPresets, {
@@ -70,20 +70,20 @@ describe('Medical Agent Preset routing', () => {
       id: 'message-1',
     } as Message])
     expect(harness.append).toHaveBeenCalledWith('model/selection',
-      expect.objectContaining({ provider: 'anthropic', model: 'anthropic/claude-fable-5.1' }))
+      expect.objectContaining({ provider: 'anthropic', model: 'anthropic/claude-opus-5.5' }))
     expect(rename).toHaveBeenCalledWith(harness.agent.session, '医学病例 · 咳嗽 3 天')
   })
 
-  it('keeps one Fable selection across multiple user turns without writing request headers', async () => {
+  it('keeps one Opus selection across multiple user turns without writing request headers', async () => {
     const harness = modeAgent('medical')
     const coordinator = new MedicalModeCoordinator(() => settings, harness.agentPresets)
     coordinator.sync(harness.agent)
     expect(harness.append).toHaveBeenCalledWith('model/selection',
-      expect.objectContaining({ provider: 'anthropic', model: 'anthropic/claude-fable-5.1' }))
+      expect.objectContaining({ provider: 'anthropic', model: 'anthropic/claude-opus-5.5' }))
     await expect(coordinator.routeRequest(harness.agent, async () => ({
       provider: 'deepseek-official', model: 'deepseek-v4-pro', maxTokens: 8_000,
     }))).resolves.toMatchObject({
-      provider: 'anthropic', model: 'anthropic/claude-fable-5.1', reasoningEffort: 'high',
+      provider: 'anthropic', model: 'anthropic/claude-opus-5.5', reasoningEffort: 'medium',
     })
     expect((await coordinator.routeRequest(harness.agent, async () => ({
       provider: 'deepseek-official', model: 'deepseek-v4-pro', maxTokens: 8_000,
@@ -118,7 +118,7 @@ describe('Medical Agent Preset routing', () => {
       provider: 'deepseek-official', model: 'deepseek-v4-pro',
     })
     await expect(coordinator.routeRequest(harness.agent, async () => ({
-      provider: 'anthropic', model: 'anthropic/claude-fable-5.1', reasoningEffort: 'high',
+      provider: 'anthropic', model: 'anthropic/claude-opus-5.5', reasoningEffort: 'medium',
     } as LlmCallConfig))).resolves.toEqual({ provider: 'deepseek-official', model: 'deepseek-v4-pro' })
   })
 })

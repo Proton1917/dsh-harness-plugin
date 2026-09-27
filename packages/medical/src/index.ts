@@ -19,8 +19,8 @@ export const MEDICAL_SETTINGS_NAMESPACE = 'medical'
 export const DEFAULT_MEDICAL_SETTINGS: MedicalSettings = Object.freeze({
   enabled: false,
   provider: 'anthropic',
-  model: 'anthropic/claude-fable-5.1',
-  reasoningEffort: 'high',
+  model: 'anthropic/claude-opus-5.5',
+  reasoningEffort: 'medium',
 })
 
 /** Plugin configuration and user-settings schema. */
