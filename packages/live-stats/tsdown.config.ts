@@ -23,10 +23,11 @@ export default defineConfig([
     dts: false,
     sourcemap: true,
     deps: {
-      alwaysBundle: [new RegExp('^@huggingface/tokenizers'), /^zod/, new RegExp('^@deepseek-ai/dsh-llm')],
+      alwaysBundle: [new RegExp('^@huggingface/tokenizers'), /^zod/, new RegExp('^@deepseek-ai/dsh-llm'), /^@deepseek-ai\/dsh-client-ui-primitives/],
       neverBundle: [
         '@deepseek-ai/cordis',
         'react',
+        'react-dom',
         'react/jsx-runtime',
         '@deepseek-ai/dsh-api-session-controller',
         '@deepseek-ai/dsh-api-session-controller/client',
@@ -36,6 +37,7 @@ export default defineConfig([
       ],
     },
     outputOptions: {
+      codeSplitting: false,
       entryFileNames: 'client.js',
       banner: `window.__ModuleLoader__.load({ id: ${JSON.stringify(CLIENT_ID)}, factory: (require) => {`,
       footer: 'return module.exports; } });',

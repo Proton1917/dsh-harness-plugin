@@ -1,40 +1,40 @@
 import type {} from '@deepseek-ai/dsh-client-ui-slots'
 
-/** Locale namespace owned by the live statistics rows. */
+/** 实时统计使用的本地化命名空间。 */
 export const LIVE_STATS_NS = 'liveStats'
 
-/** Complete user-facing copy of the live statistics rows. */
+/** 按钮和详情的本地化文本标识。 */
 export type LiveStatsLocaleKey =
-  | 'counts'
-  | 'llm'
-  | 'tokens'
-  | 'tool'
-  | 'tps'
-  | 'ttftAverage'
+  | 'counts' | 'speed' | 'totalCompact' | 'cacheHit' | 'timeTitle' | 'usageTitle'
+  | 'turnsLabel' | 'stepsLabel' | 'llmLabel' | 'toolLabel' | 'ttftLabel' | 'speedLabel'
+  | 'totalLabel' | 'inputLabel' | 'uncachedLabel' | 'cacheReadLabel' | 'cacheWriteLabel'
+  | 'outputLabel' | 'cacheLabel' | 'estimateLabel' | 'estimateValue'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
-    /** Live token and throughput statistics rendered below the composer. */
+    /** 输入框下方的实时统计。 */
     liveStats: LiveStatsLocaleKey
   }
 }
 
-/** Simplified Chinese live-statistics copy. */
+/** 简体中文统计文案。 */
 export const zh: Record<LiveStatsLocaleKey, string> = {
-  counts: '{turns} 轮 · {steps} 步',
-  llm: 'LLM {duration}',
-  tokens: '输入 {input} · 输出 {output} · 总计 {total} token',
-  tool: '工具 {duration}',
-  tps: 'TPS {throughput} token/秒',
-  ttftAverage: '首 token 平均 {duration}',
+  counts: '{turns} 轮 {steps} 步', speed: '{throughput} tok/s', totalCompact: '{total} tok',
+  cacheHit: '缓存命中 {percent}%', timeTitle: '会话统计', usageTitle: 'Token 用量',
+  turnsLabel: '轮次', stepsLabel: '步骤', llmLabel: '模型用时', toolLabel: '工具调用用时',
+  ttftLabel: '首 token 平均（TTFT）', speedLabel: '输出速度（TPS）', totalLabel: '累计用量',
+  inputLabel: '输入总量', uncachedLabel: '未缓存输入', cacheReadLabel: '缓存读取',
+  cacheWriteLabel: '缓存写入', outputLabel: '输出', cacheLabel: '已结算缓存命中',
+  estimateLabel: '实时用量', estimateValue: '~ 表示当前生成中的估算值',
 }
 
-/** English live-statistics copy. */
+/** 英文统计文案。 */
 export const en: Record<LiveStatsLocaleKey, string> = {
-  counts: 'Turns {turns} · Steps {steps}',
-  llm: 'LLM {duration}',
-  tokens: 'Input {input} · Output {output} · Total {total} tok',
-  tool: 'Tools {duration}',
-  tps: 'TPS {throughput} tok/s',
-  ttftAverage: 'TTFT avg {duration}',
+  counts: '{turns} turns {steps} steps', speed: '{throughput} tok/s', totalCompact: '{total} tok',
+  cacheHit: 'Cache hit {percent}%', timeTitle: 'Session statistics', usageTitle: 'Token usage',
+  turnsLabel: 'Turns', stepsLabel: 'Steps', llmLabel: 'LLM time', toolLabel: 'Tool time',
+  ttftLabel: 'Average TTFT', speedLabel: 'Output speed (TPS)', totalLabel: 'Total tokens',
+  inputLabel: 'Total input', uncachedLabel: 'Uncached input', cacheReadLabel: 'Cache read',
+  cacheWriteLabel: 'Cache write', outputLabel: 'Output', cacheLabel: 'Settled cache hit',
+  estimateLabel: 'Live usage', estimateValue: '~ marks estimates during generation',
 }
