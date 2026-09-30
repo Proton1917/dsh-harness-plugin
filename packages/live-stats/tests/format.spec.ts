@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatDuration, formatFullTokens, formatTokens, formatTokensPerSecond } from '../src/client/format.ts'
+import { cacheHitPercent, formatDuration, formatFullTokens, formatTokens, formatTokensPerSecond } from '../src/client/format.ts'
 import { en, zh } from '../src/client/locales.ts'
 
 describe('实时统计格式', () => {
@@ -15,5 +15,10 @@ describe('实时统计格式', () => {
   })
   it('中英文包含相同的按钮和详情文案', () => {
     expect(Object.keys(zh)).toEqual(Object.keys(en))
+  })
+  it('缓存命中保留小数并区分完整命中与接近完整命中', () => {
+    expect(cacheHitPercent({ uncachedInputTokens: 99, cacheReadTokens: 9901, cacheWriteTokens: 0, outputTokens: 0 })).toBe('99.01')
+    expect(cacheHitPercent({ uncachedInputTokens: 1, cacheReadTokens: 99999, cacheWriteTokens: 0, outputTokens: 0 })).toBe('99.999')
+    expect(cacheHitPercent({ uncachedInputTokens: 0, cacheReadTokens: 10000, cacheWriteTokens: 0, outputTokens: 0 })).toBe('100')
   })
 })

@@ -1,5 +1,5 @@
 import type { Context } from '@deepseek-ai/cordis'
-import z from 'schemastery'
+import z from '@deepseek-ai/schemastery'
 import type {} from '@deepseek-ai/dsh-session-projection'
 import { createLiveTokenUsageProjectionDefinition } from './projection.ts'
 import { createDeepSeekTokenCounter } from './tokenizer.ts'
@@ -7,11 +7,11 @@ import { createDeepSeekTokenCounter } from './tokenizer.ts'
 /** Services required by the host projection plugin. */
 export const inject = ['sessionProjections']
 
-/** Plugin configuration; no tunables are required by the provider tokenizer. */
-export type Config = Record<never, never>
+/** 实时用时的显示刷新间隔。 */
+export interface Config { refreshIntervalMs?: number }
 
 /** Runtime schema for {@link Config}. */
-export const Config: z<Config> = z.object({})
+export const Config = z.object({ refreshIntervalMs: z.natural().min(16).max(1000).default(250) })
 
 /** Register the replayable live-token projection. */
 export function apply(ctx: Context, _config: Config = {}): void {

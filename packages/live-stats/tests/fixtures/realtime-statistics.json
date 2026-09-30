@@ -1,0 +1,34 @@
+{
+  "pendingTool": {
+    "turns": 2,
+    "steps": 2,
+    "llmMs": 112789,
+    "toolMs": 0,
+    "ttftMs": 3378,
+    "ttftSteps": 2,
+    "model": null,
+    "pendingTools": { "call_00_wfiiHCLkdP9rXWCrFbTM1496": 1790759906711 }
+  },
+  "waitingModel": {
+    "turns": 2,
+    "steps": 3,
+    "llmMs": 112789,
+    "toolMs": 6562,
+    "ttftMs": 3378,
+    "ttftSteps": 2,
+    "model": { "startedAt": 1790759913284, "firstTokenTime": null },
+    "pendingTools": {}
+  },
+  "settled": {
+    "turns": 2,
+    "steps": 3,
+    "llmMs": 113714,
+    "toolMs": 6562,
+    "ttftMs": 4270,
+    "ttftSteps": 3,
+    "model": null,
+    "pendingTools": {}
+  },
+  "toolResultTime": 1790759913273,
+  "firstTokenTime": 1790759914176
+}

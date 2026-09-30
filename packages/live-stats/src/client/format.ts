@@ -32,7 +32,7 @@ export function cacheHitPercent(usage: TokenUsageProjection): string | null {
   if (total === 0) return null
   if (usage.cacheReadTokens === total) return '100'
   const percent = usage.cacheReadTokens / total * 100
-  for (let digits = 0; digits <= 15; digits++) {
+  for (let digits = 2; digits <= 15; digits++) {
     const rounded = Number(percent.toFixed(digits))
     if (rounded < 100) return String(rounded)
   }

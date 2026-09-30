@@ -26,7 +26,12 @@ export function useLiveUsage(
     return {
       ...durable,
       outputTokens: durable.outputTokens - durable.activeStepUsage.outputTokens + sample.buckets.outputTokens,
-      estimated: !sample.exact || durable.estimated,
+      estimated: !sample.exact || (durable.settledEstimated ?? durable.estimated),
+      activeStepEstimated: !sample.exact,
+      ...(durable.statistics?.model === null || durable.statistics === undefined ? {} : {
+        statistics: { ...durable.statistics, model: { ...durable.statistics.model,
+          firstTokenTime: durable.statistics.model.firstTokenTime ?? sample.firstOutputTime ?? null } },
+      }),
       ...(sample.exact ? {
         uncachedInputTokens: durable.uncachedInputTokens - durable.activeStepUsage.uncachedInputTokens + sample.buckets.uncachedInputTokens,
         cacheReadTokens: durable.cacheReadTokens - durable.activeStepUsage.cacheReadTokens + sample.buckets.cacheReadTokens,

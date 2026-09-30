@@ -1,4 +1,4 @@
-import { createElement } from 'react'
+import { createElement, useMemo, useSyncExternalStore } from 'react'
 import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { useLiveUsage } from './live-usage.ts'
@@ -13,6 +13,8 @@ import type {} from '../types.ts'
 import { LiveStatsPills } from './LiveStatsPills.tsx'
 import { en, LIVE_STATS_NS, zh } from './locales.ts'
 import { LIVE_STATS_STYLE } from './styles.ts'
+import { resolveRefreshInterval } from './live-clock.ts'
+import type { Config } from '../index.ts'
 
 export {
   billedInputTokens, cacheHitPercent, formatDuration, formatFullTokens, formatTokens,
@@ -24,13 +26,17 @@ export { LiveStatsPills } from './LiveStatsPills.tsx'
 export const inject = ['slots', 'conversation', 'locale', 'sessions']
 
 /** 安装实时统计按钮及其样式。 */
-export function apply(ctx: ClientContext): void {
-  function LiveRow(props: LiveStatsPillsProps & { sessionId: SessionId }) {
+export function apply(ctx: ClientContext, config: Config = {}): void {
+  const refreshIntervalMs = resolveRefreshInterval(config)
+  function LiveRow(props: Omit<LiveStatsPillsProps, 'refreshIntervalMs' | 'sessionRunning'> & { sessionId: SessionId }) {
     const binding = (ctx as unknown as { sessions: ISessions }).sessions.binding(props.sessionId)
     if (binding === undefined) throw new Error('live-stats: Session binding is unavailable')
+    const subscribe = useMemo(() => binding.session.subscribe.bind(binding.session), [binding])
+    const getSnapshot = useMemo(() => binding.session.getSnapshot.bind(binding.session), [binding])
+    const snapshot = useSyncExternalStore(subscribe, getSnapshot)
     const durable = props.useProjection('liveTokenUsage')
     const liveUsage = useLiveUsage(binding.eventSource, durable)
-    return createElement(LiveStatsPills, { ...props, liveUsage })
+    return createElement(LiveStatsPills, { ...props, liveUsage, refreshIntervalMs, sessionRunning: snapshot.running })
   }
   ctx.effect(() => {
     const style = document.createElement('style')

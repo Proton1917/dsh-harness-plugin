@@ -6,6 +6,8 @@ import type { ProjectionDefinition } from '@deepseek-ai/dsh-session-projection'
 import type { TokenUsageProjection } from '@deepseek-ai/dsh-token-meter/client'
 import type { TokenCounter } from './token-counter.ts'
 import type { LiveTokenUsageProjection } from './types.ts'
+import { applyStatistics, initialStatistics, statisticsSchema } from './statistics.ts'
+import type { StatisticsState } from './statistics.ts'
 
 const zeroBuckets = (): TokenUsageProjection => ({
   uncachedInputTokens: 0,
@@ -39,6 +41,9 @@ const projectionSchema = z.object({
   cacheWriteTokens: z.number().int().nonnegative(),
   activeStepUsage: z.object({ uncachedInputTokens: z.number(), outputTokens: z.number(), cacheReadTokens: z.number(), cacheWriteTokens: z.number() }).optional(),
   estimated: z.boolean(),
+  settledEstimated: z.boolean().optional(),
+  activeStepEstimated: z.boolean().optional(),
+  statistics: statisticsSchema.optional(),
   tokensPerSecond: z.number().nonnegative().optional(),
 }).strict() as unknown as z.ZodType<LiveTokenUsageProjection>
 
@@ -80,6 +85,7 @@ interface State {
   surfaceTokens: number
   header: EpochHeader | undefined
   active: ActiveStep | null
+  statistics: StatisticsState
 }
 
 declare module '@deepseek-ai/dsh-session-projection/types' {
@@ -145,6 +151,7 @@ const stateSchema = z.object({
     && typeof (value as { config?: unknown }).config === 'object'
     && (value as { config?: unknown }).config !== null).optional(),
   active: activeStepSchema.nullable(),
+  statistics: statisticsSchema.extend({ lastTurn: z.number().int().nonnegative().nullable() }),
 }).strict() as z.ZodType<State>
 
 function surfaceMessage(event: SurfaceEvent): Message {
@@ -290,7 +297,7 @@ function applyChunk(active: ActiveStep, chunk: StreamChunk, time: number, counte
 export function sampleLiveChunks(chunks: readonly { chunk: StreamChunk; time: number }[], counter: TokenCounter) {
   let active: ActiveStep = { turn: 0, step: 0, buckets: zeroBuckets(), blocks: [], exact: false }
   for (const member of chunks) active = applyChunk(active, member.chunk, member.time, counter)
-  return { buckets: active.buckets, exact: active.exact, tokensPerSecond: rateOf(active) }
+  return { buckets: active.buckets, exact: active.exact, tokensPerSecond: rateOf(active), firstOutputTime: active.firstOutputTime }
 }
 
 function view(state: State): LiveTokenUsageProjection {
@@ -310,6 +317,14 @@ function view(state: State): LiveTokenUsageProjection {
   return {
     ...buckets,
     estimated: estimates > 0,
+    settledEstimated: state.settledEstimates - (previous?.estimated === true ? 1 : 0) > 0,
+    ...(active === null ? {} : { activeStepEstimated: !active.exact }),
+    statistics: {
+      turns: state.statistics.turns, steps: state.statistics.steps,
+      llmMs: state.statistics.llmMs, toolMs: state.statistics.toolMs,
+      ttftMs: state.statistics.ttftMs, ttftSteps: state.statistics.ttftSteps,
+      model: state.statistics.model, pendingTools: state.statistics.pendingTools,
+    },
     ...(active === null ? {} : { activeStepUsage: active.buckets }),
     ...(rate === undefined ? {} : { tokensPerSecond: rate }),
   }
@@ -330,9 +345,11 @@ export function createLiveTokenUsageProjectionDefinition(
       surfaceTokens: 0,
       header: undefined,
       active: null,
+      statistics: initialStatistics(),
     }),
     apply: (state, event: SessionEvent) => {
-      let next = state
+      const statistics = applyStatistics(state.statistics, event)
+      let next = statistics === state.statistics ? state : { ...state, statistics }
       if (event.type === 'step/start') {
         next = {
           ...next,
@@ -410,6 +427,6 @@ export function createLiveTokenUsageProjectionDefinition(
       return next
     },
     wire: { viewSchema: projectionSchema, view },
-    stateVersion: 5,
+    stateVersion: 6,
   } satisfies ProjectionDefinition<'liveTokenUsage', State>
 }

@@ -11,12 +11,16 @@ import type {} from '@deepseek-ai/dsh-session-stats/client'
 import type { LiveTokenUsageProjection } from '../types.ts'
 import { billedInputTokens, cacheHitPercent, formatDuration, formatFullTokens, formatTokens, formatTokensPerSecond } from './format.ts'
 import type { LIVE_STATS_NS } from './locales.ts'
+import { runningStatistics } from '../statistics.ts'
+import { useLiveClock } from './live-clock.ts'
 
 /** 两个统计按钮共享的会话数据。 */
 export interface LiveStatsPillsProps {
   liveUsage?: LiveTokenUsageProjection | undefined
   useProjection: UseProjection
   t: TranslateNS<typeof LIVE_STATS_NS>
+  refreshIntervalMs: number
+  sessionRunning: boolean
 }
 
 interface StatPillProps {
@@ -61,13 +65,19 @@ function StatPill({ kind, label, title, icon, open, setOpen, children }: StatPil
  * @param props - 会话投影、流式用量及本地化文本。
  * @returns 速度和用量统计按钮。
  */
-export function LiveStatsPills({ useProjection, liveUsage: transient, t }: LiveStatsPillsProps) {
-  const stats = useProjection('sessionStats')
+export function LiveStatsPills({ useProjection, liveUsage: transient, t, refreshIntervalMs, sessionRunning }: LiveStatsPillsProps) {
+  const settledStats = useProjection('sessionStats')
   const billed = useProjection('tokenUsage')
   const projected = useProjection('liveTokenUsage')
   const usage = transient ?? projected ?? billed
+  const recorded = (transient ?? projected)?.statistics
+  const statistics = recorded === undefined || sessionRunning ? recorded : { ...recorded, model: null, pendingTools: {} }
+  const active = statistics !== undefined && (statistics.model !== null || Object.keys(statistics.pendingTools).length > 0)
+  const now = useLiveClock(active, refreshIntervalMs)
+  const running = statistics === undefined ? undefined : runningStatistics(statistics, now)
+  const stats = running ?? settledStats
   const rate = (transient ?? projected)?.tokensPerSecond
-    ?? (stats !== undefined && stats.decodeMs > 0 ? stats.decodeTokens / (stats.decodeMs / 1000) : undefined)
+    ?? (settledStats !== undefined && settledStats.decodeMs > 0 ? settledStats.decodeTokens / (settledStats.decodeMs / 1000) : undefined)
   const [opened, setOpened] = useState<'time' | 'usage' | null>(null)
   const setTime = useCallback((open: boolean) => { setOpened(open ? 'time' : null) }, [])
   const setUsage = useCallback((open: boolean) => { setOpened(open ? 'usage' : null) }, [])
@@ -77,7 +87,12 @@ export function LiveStatsPills({ useProjection, liveUsage: transient, t }: LiveS
   const timeLabel = [stats !== undefined && stats.steps > 0 ? t('counts', { turns: stats.turns, steps: stats.steps }) : null, speed]
     .filter(value => value !== null).join(' · ')
   const total = usage === undefined ? 0 : billedInputTokens(usage) + usage.outputTokens
-  const cache = billed === undefined ? null : cacheHitPercent(billed)
+  const reportedUsage = (transient ?? projected)?.activeStepEstimated === false ? usage : billed
+  const cache = reportedUsage === undefined ? null : cacheHitPercent(reportedUsage)
+  const ttft = statistics === undefined
+    ? settledStats !== undefined && settledStats.ttftSteps > 0 ? settledStats.ttftMs / settledStats.ttftSteps : undefined
+    : running?.ttftAverageMs
+  const ttftEstimated = running?.ttftEstimated === true
   const usageLabel = [t('totalCompact', { total: `${estimated ? '~' : ''}${formatTokens(total)}` }),
     cache === null ? null : t('cacheHit', { percent: cache })].filter(value => value !== null).join(' · ')
   const row = (key: string, label: string, value: string) => <Fragment key={key}><dt>{label}</dt><dd>{value}</dd></Fragment>
@@ -90,17 +105,18 @@ export function LiveStatsPills({ useProjection, liveUsage: transient, t }: LiveS
         {row('steps', t('stepsLabel'), String(stats.steps))}
         {row('llm', t('llmLabel'), formatDuration(stats.llmMs))}
         {row('tool', t('toolLabel'), formatDuration(stats.toolMs))}
-        {stats.ttftSteps > 0 && row('ttft', t('ttftLabel'), formatDuration(stats.ttftMs / stats.ttftSteps))}
+        {ttft !== undefined && row('ttft', t('ttftLabel'), `${ttftEstimated ? '~' : ''}${formatDuration(ttft)}`)}
       </>}
       {speed !== null && row('tps', t('speedLabel'), speed)}
+      {active && row('timing', t('timeTimingLabel'), t('timeEstimateValue'))}
     </StatPill>}
     {usage !== undefined && total > 0 && <StatPill kind="usage" label={usageLabel} title={t('usageTitle')}
       icon={<IconDatabaseOutlineRegular />} open={opened === 'usage'} setOpen={setUsage}>
       {row('total', t('totalLabel'), count(total))}
       {row('input', t('inputLabel'), count(billedInputTokens(usage)))}
       {row('uncached', t('uncachedLabel'), count(usage.uncachedInputTokens))}
-      {row('read', t('cacheReadLabel'), count(usage.cacheReadTokens))}
-      {usage.cacheWriteTokens > 0 && row('write', t('cacheWriteLabel'), count(usage.cacheWriteTokens))}
+      {row('read', t('cacheReadLabel'), formatFullTokens(usage.cacheReadTokens))}
+      {usage.cacheWriteTokens > 0 && row('write', t('cacheWriteLabel'), formatFullTokens(usage.cacheWriteTokens))}
       {row('output', t('outputLabel'), count(usage.outputTokens))}
       {cache !== null && row('cache', t('cacheLabel'), `${cache}%`)}
       {estimated && row('estimate', t('estimateLabel'), t('estimateValue'))}
