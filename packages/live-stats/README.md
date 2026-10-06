@@ -19,3 +19,5 @@ dsh plugin --profile web add ./packages/live-stats
 ```
 
 当前源码面向 DSH `0.2.0-rc.2`。`v0.1.0` 发布 tarball 仍面向 DSH `0.1.1-rc.2`，安装时应使用对应的 DSH 版本。
+
+Client 构建包含 UI primitives 的数学渲染依赖，KaTeX 使用 `0.18.2` 或更新的兼容版本；工作区 override 使 `micromark-extension-math` 使用同一修复版本。
