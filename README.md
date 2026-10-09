@@ -95,7 +95,7 @@ git diff --check
 
 `pnpm run ci` runs package type checks, unit tests, and builds. `pnpm run pack:check` inspects the files shipped by every tarball. User-visible changes also require validation in the real Harness Web application.
 
-Dependency maintenance includes `pnpm audit` across production and development dependencies. The scoped overrides in `pnpm-workspace.yaml` select security patches for the pinned DSH assembly and LibreOffice dependency.
+Dependency maintenance includes `pnpm audit` across production and development dependencies. The scoped overrides in `pnpm-workspace.yaml` select security patches for the pinned DSH assembly, MCP OAuth clients, image decoding, and LibreOffice dependency. The workspace explicitly installs MCP SDK `1.31.0` to provide Google GenAI's optional peer. These overrides apply to this workspace; the official Desktop Host receives its dependencies through the application's built-in updater.
 
 ## Brand and licenses
 
