@@ -33,17 +33,17 @@ export function MascotBrandName(): ReactElement {
 }
 
 /**
- * Build the rc.8 sidebar brand stylesheet.
- * @param imageUrl - bundled data URL for the repository portrait.
- * @returns CSS for the expanded card and collapsed portrait mark.
+ * 构建展开侧栏角色卡与收起标识的样式。
+ * @param imageUrl - 仓库人物图打包后的 URL。
+ * @returns 展开角色卡与收起标识的 CSS。
  */
 export function brandStyles(imageUrl: string): string {
   const mark = `[${SLOT_MARK_ATTRIBUTE}]`
   const name = `[${SLOT_NAME_ATTRIBUTE}]`
   const word = `[${SLOT_WORD_ATTRIBUTE}]`
   const badge = `[${SLOT_BADGE_ATTRIBUTE}]`
-  const card = `button:has(${name})`
-  const cardRow = `div:has(> button ${name})`
+  const card = `:is(button, span):has(> span > span ${name})`
+  const cardRow = `div[data-window-drag]:has(> * > span > span ${name})`
   const rail = `button:has(${mark}):not(:has(${name}))`
   return `
 ${card} {
@@ -216,7 +216,7 @@ export function installBrandStyles(ctx: ClientContext): void {
   }, 'harness-brand: mascot styles')
 }
 
-/** Register the rc.8 brand occupants ahead of the shipped entries. */
+/** 以覆盖优先级注册侧栏品牌插槽。 */
 export function installBrandSlots(ctx: ClientContext): void {
   ctx.slots.inject('sidebar.brand.mark', () =>
     ctx.slots.inject('sidebar.brand.name', function* () {

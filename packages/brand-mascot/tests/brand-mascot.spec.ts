@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import type { AgentPresetRegistry } from '@deepseek-ai/dsh-agent-preset-registry'
@@ -18,7 +19,7 @@ describe('web brand mascot client plugin', () => {
     document.body.innerHTML = ''
   })
 
-  it('installs and retracts the rc.8 slot stylesheet', () => {
+  it('installs and retracts the native and Web sidebar brand stylesheet', () => {
     const effects: Array<() => void> = []
     const ctx = {
       effect: (install: () => (() => void)) => { effects.push(install()) },
@@ -27,14 +28,31 @@ describe('web brand mascot client plugin', () => {
     installBrandStyles(ctx)
 
     const styles = document.querySelector('[data-dsh-brand-mascot-style]')?.textContent ?? ''
-    expect(styles).toContain('button:has([data-dsh-brand-mascot-slot-name])')
-    expect(styles).toContain('div:has(> button [data-dsh-brand-mascot-slot-name])')
+    expect(styles).toContain(':is(button, span):has(> span > span [data-dsh-brand-mascot-slot-name])')
+    expect(styles).toContain('div[data-window-drag]:has(> * > span > span [data-dsh-brand-mascot-slot-name])')
     expect(styles).toContain('button:has([data-dsh-brand-mascot-slot-mark]):not(:has([data-dsh-brand-mascot-slot-name]))')
     expect(styles).toContain('height: 324px')
     expect(styles).toContain('mascot.webp')
 
     for (const dispose of effects.reverse()) dispose()
     expect(document.querySelector('[data-dsh-brand-mascot-style]')).toBeNull()
+  })
+
+  it('styles the captured Desktop brand container across renderer slot wrappers', () => {
+    document.body.innerHTML = readFileSync('tests/fixtures/desktop-brand.html', 'utf8')
+    const style = document.createElement('style')
+    style.textContent = brandStyles(new URL('../src/assets/mascot.webp', import.meta.url).href)
+    document.head.append(style)
+
+    const cardRule = style.sheet!.cssRules[0] as CSSStyleRule
+    const cards = document.querySelectorAll(cardRule.selectorText)
+    expect(cards).toHaveLength(1)
+    expect(cards[0]?.tagName).toBe('SPAN')
+    expect(getComputedStyle(cards[0]!).height).toBe('324px')
+    const rowRule = style.sheet!.cssRules[1] as CSSStyleRule
+    const rows = document.querySelectorAll(rowRule.selectorText)
+    expect(rows).toHaveLength(1)
+    expect(getComputedStyle(rows[0]!).height).toBe('340px')
   })
 
   it('renders the portrait mark and custom wordmark components', () => {
@@ -54,7 +72,7 @@ describe('web brand mascot client plugin', () => {
     expect(styles).not.toContain('viewBox=')
   })
 
-  it('registers both rc.8 sidebar brand slots at shadowing priority', () => {
+  it('registers both sidebar brand slots at shadowing priority', () => {
     const registrations: Array<{ name: string, priority?: number, component: unknown }> = []
     const runInstall = (install: () => unknown): (() => void) => {
       const installed = install()
