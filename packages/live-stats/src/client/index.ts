@@ -32,7 +32,7 @@ export function apply(ctx: ClientContext, config: Config = {}): void {
     const binding = (ctx as unknown as { sessions: ISessions }).sessions.binding(props.sessionId)
     if (binding === undefined) throw new Error('live-stats: Session binding is unavailable')
     const subscribe = useMemo(() => binding.session.subscribe.bind(binding.session), [binding])
-    const getSnapshot = useMemo(() => binding.session.getSnapshot.bind(binding.session), [binding])
+    const getSnapshot = useMemo(() => () => binding.session.getSnapshot(), [binding])
     const snapshot = useSyncExternalStore(subscribe, getSnapshot)
     const durable = props.useProjection('liveTokenUsage')
     const liveUsage = useLiveUsage(binding.eventSource, durable)
@@ -49,11 +49,18 @@ export function apply(ctx: ClientContext, config: Config = {}): void {
     () => ctx.locale.register(LIVE_STATS_NS, { zh, en }),
     'live-stats: dictionaries',
   )
-  ctx.slots.inject('conversation.composer.dock', () => ctx.slots.register({
-    name: 'conversation.composer.dock',
-    id: 'stats',
-    order: 0,
-    priority: -1,
-    locale: LIVE_STATS_NS,
-  }, LiveRow))
+  ctx.slots.inject('conversation.composer.dock', function* () {
+    yield ctx.slots.register({
+      name: 'conversation.composer.dock',
+      id: 'activity',
+      order: 0,
+      priority: -1,
+      locale: LIVE_STATS_NS,
+    }, LiveRow)
+    yield ctx.slots.register({
+      name: 'conversation.composer.dock',
+      id: 'usage',
+      priority: -1,
+    }, () => null)
+  })
 }
