@@ -95,7 +95,7 @@ git diff --check
 
 `pnpm run ci` 运行各包的类型检查、单元测试和构建。`pnpm run pack:check` 检查每个 tarball 的实际文件。涉及界面的改动还需要在真实 Harness Web 中确认。
 
-依赖维护使用 `pnpm audit` 检查生产和开发依赖。`pnpm-workspace.yaml` 中限定版本或父包的 override 为固定的 DSH 兼容依赖与 LibreOffice 依赖选择安全补丁。
+依赖维护使用 `pnpm audit` 检查生产和开发依赖。`pnpm-workspace.yaml` 中限定版本或父包的 override 为固定的 DSH 兼容依赖、Hono、Vite、MCP Client 与 Server、图片解码和 LibreOffice 依赖选择安全补丁。工作区显式安装 MCP SDK `1.32.0`，满足 Google GenAI 的可选 peer 依赖。这些 override 适用于本工作区；官方 Desktop Host 通过应用内置更新机制获取依赖更新。
 
 ## 品牌与许可证
 

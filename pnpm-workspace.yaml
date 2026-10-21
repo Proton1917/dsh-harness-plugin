@@ -6,7 +6,8 @@ overrides:
   'fast-uri@>=3.0.0 <3.1.8': 3.1.8
   'undici@>=8.0.0 <8.10.2': 8.10.2
   'ip-address@>=10.0.0 <10.7.1': 10.7.1
-  'hono@<4.13.7': 4.13.7
+  'hono@<4.13.11': 4.13.11
+  'vite@>=8.2.0 <=8.2.3': 8.2.4
   'http-cache-semantics@<=4.2.0': 4.3.0
   'source-map-js@>=1.0.0 <1.2.2': 1.2.2
   'proxy-addr@>=1.1.0 <2.0.8': 2.0.8
@@ -16,11 +17,11 @@ overrides:
   'qs@<6.16.0': 6.16.0
   'js-yaml@>=4.0.0 <4.3.2': 4.3.2
   '@deepseek-ai/dsh-attachment-local@0.2.1-rc.2>sharp': 0.35.5
-  '@modelcontextprotocol/client@>=2.0.0 <2.2.0': 2.2.0
-  '@modelcontextprotocol/sdk@>=1.12.0 <1.31.0': 1.31.0
+  '@modelcontextprotocol/client@>=2.0.0 <2.3.0': 2.3.0
+  '@modelcontextprotocol/sdk@>=1.12.0 <1.32.0': 1.32.0
   # 保持 MCP 安全补丁兼容的现有传输与限流依赖版本。
-  '@modelcontextprotocol/sdk@1.31.0>@hono/node-server': 2.1.1
-  '@modelcontextprotocol/sdk@1.31.0>express-rate-limit': 8.6.2
+  '@modelcontextprotocol/sdk@1.32.0>@hono/node-server': 2.1.1
+  '@modelcontextprotocol/sdk@1.32.0>express-rate-limit': 8.6.2
   # libreoffice-kit pins a release affected by GHSA-px8p-9vwx-vf98.
   '@deepseek-ai/libreoffice-kit@0.1.5>fflate': 0.8.3
   '@deepseek-ai/cordis-plugin-group': 1.0.5
