@@ -95,7 +95,7 @@ git diff --check
 
 `pnpm run ci` runs package type checks, unit tests, and builds. `pnpm run pack:check` inspects the files shipped by every tarball. User-visible changes also require validation in the real Harness Web application.
 
-Dependency maintenance includes `pnpm audit` across production and development dependencies and all severity levels. The scoped overrides in `pnpm-workspace.yaml` select security patches for the pinned DSH assembly, HTTP handling, URI and IP parsing, Zod, Hono, Vite, MCP clients and servers, image decoding, and LibreOffice dependency. The plugin packages require Vitest `^4.1.12`; Live Stats pins Zod `4.6.6` to share DSH's schema types. The workspace explicitly installs MCP SDK `1.32.0` to provide Google GenAI's optional peer. These overrides apply to this workspace; the official Desktop Host receives its dependencies through the application's built-in updater.
+Dependency maintenance includes `pnpm audit` across production and development dependencies and all severity levels. The scoped overrides in `pnpm-workspace.yaml` select security patches for the pinned DSH assembly, HTTP handling, URI and IP parsing, Zod, Hono, Vite, MCP clients and servers, image decoding, and LibreOffice dependency. The qs override selects `6.16.1` for `GHSA-6pq8-jhm2-2vcw`, including Express dependencies of MCP SDK. The plugin packages require Vitest `^4.1.12`; Live Stats pins Zod `4.6.6` to share DSH's schema types. The workspace explicitly installs MCP SDK `1.32.0` to provide Google GenAI's optional peer. These overrides apply to this workspace; the official Desktop Host receives its dependencies through the application's built-in updater.
 
 ## Brand and licenses
 

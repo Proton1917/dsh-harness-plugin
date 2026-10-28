@@ -16,7 +16,7 @@ overrides:
   'compression@<1.8.2': 1.8.2
   # micromark 的数学渲染使用修复 trust 继承问题的 KaTeX 版本。
   'micromark-extension-math@3.1.0>katex': 0.18.2
-  'qs@<6.16.0': 6.16.0
+  'qs@>=6.7.0 <6.16.1': 6.16.1
   'js-yaml@>=4.0.0 <4.3.2': 4.3.2
   '@deepseek-ai/dsh-attachment-local@0.2.1-rc.3>sharp': 0.35.5
   '@modelcontextprotocol/client@>=2.0.0 <2.3.0': 2.3.0
