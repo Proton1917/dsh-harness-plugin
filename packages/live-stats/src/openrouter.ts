@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { setTimeout as delay } from 'node:timers/promises'
 import type { Context } from '@deepseek-ai/cordis'
-import { appendPluginRecord } from '@deepseek-ai/dsh-session'
+import { appendPluginRecord, SessionLogOffset } from '@deepseek-ai/dsh-session'
 import type { Session, SessionEvent } from '@deepseek-ai/dsh-session'
 import { z } from 'zod'
 import { readOpenRouterGeneration } from './openrouter-statistics.ts'
@@ -35,6 +35,7 @@ export function openRouterGenerationId(event: SessionEvent<'assistant/message'>)
  */
 export function installOpenRouterStatistics(ctx: Context, config: OpenRouterConfig): void {
   const jobs = new Map<Session, Set<{ controller: AbortController; done: Promise<void> }>>()
+  const observed = new WeakMap<Session, number>()
   let disposed = false
   async function collect(session: Session, event: SessionEvent<'assistant/message'>, generationId: string, signal: AbortSignal) {
     const key = (await readFile(config.apiKeyFile, 'utf8')).trim()
@@ -64,8 +65,11 @@ export function installOpenRouterStatistics(ctx: Context, config: OpenRouterConf
     }
     throw new Error('OpenRouter 单次调用统计仍在准备，查询期限已结束')
   }
-  ctx.on('session/event', (session, event) => {
-    if (disposed || event.type !== 'assistant/message') return
+  ctx.effect(() => ctx.sessionProjections.onChanged((session, key) => {
+    if (disposed || key !== 'liveTokenUsage' || session.seq === 0) return
+    const event = session.snapshotEvents(SessionLogOffset(session.seq - 1))[0]
+    if (event?.type !== 'assistant/message' || observed.get(session) === event.seq) return
+    observed.set(session, event.seq)
     const generationId = openRouterGenerationId(event)
     if (generationId === undefined) return
     const controller = new AbortController()
@@ -79,7 +83,7 @@ export function installOpenRouterStatistics(ctx: Context, config: OpenRouterConf
       owned.delete(job)
       if (owned.size === 0) jobs.delete(session)
     })
-  })
+  }), 'live-stats: completed response observation')
   ctx.on('session/disposed', session => {
     for (const job of jobs.get(session) ?? []) job.controller.abort()
   })
