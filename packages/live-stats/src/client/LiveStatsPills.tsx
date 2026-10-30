@@ -76,14 +76,17 @@ export function LiveStatsPills({ useProjection, liveUsage: transient, t, refresh
   const now = useLiveClock(active, refreshIntervalMs)
   const running = statistics === undefined ? undefined : runningStatistics(statistics, now)
   const stats = running ?? settledStats
-  const rate = (transient ?? projected)?.tokensPerSecond
-    ?? (settledStats !== undefined && settledStats.decodeMs > 0 ? settledStats.decodeTokens / (settledStats.decodeMs / 1000) : undefined)
+  const live = transient ?? projected
+  const providerStatistics = live?.openRouter
+  const sampledRate = live?.tokensPerSecond
+  const rate = providerStatistics === undefined ? sampledRate
+    : providerStatistics.outputTokens * 1000 / providerStatistics.generationMs
   const [opened, setOpened] = useState<'time' | 'usage' | null>(null)
   const setTime = useCallback((open: boolean) => { setOpened(open ? 'time' : null) }, [])
   const setUsage = useCallback((open: boolean) => { setOpened(open ? 'usage' : null) }, [])
   const estimated = (transient ?? projected)?.estimated === true
   const count = (value: number): string => `${estimated ? '~' : ''}${formatFullTokens(value)}`
-  const speed = rate === undefined ? null : t('speed', { throughput: formatTokensPerSecond(rate) })
+  const speed = rate === undefined ? null : t('speed', { throughput: `${providerStatistics === undefined ? '~' : ''}${formatTokensPerSecond(rate)}` })
   const timeLabel = [stats !== undefined && stats.steps > 0 ? t('counts', { turns: stats.turns, steps: stats.steps }) : null, speed]
     .filter(value => value !== null).join(' · ')
   const total = usage === undefined ? 0 : billedInputTokens(usage) + usage.outputTokens
@@ -107,7 +110,13 @@ export function LiveStatsPills({ useProjection, liveUsage: transient, t, refresh
         {row('tool', t('toolLabel'), formatDuration(stats.toolMs))}
         {ttft !== undefined && row('ttft', t('ttftLabel'), `${ttftEstimated ? '~' : ''}${formatDuration(ttft)}`)}
       </>}
-      {speed !== null && row('tps', t('speedLabel'), speed)}
+      {speed !== null && row('tps', t(providerStatistics === undefined ? 'sampledSpeedLabel' : 'openRouterSpeedLabel'), speed)}
+      {providerStatistics !== undefined && <>
+        {row('speedStep', t('speedStepLabel'), t('counts', { turns: providerStatistics.turn, steps: providerStatistics.step }))}
+        {row('speedProvider', t('speedProviderLabel'), providerStatistics.provider)}
+      </>}
+      {providerStatistics !== undefined && sessionRunning && sampledRate !== undefined
+        && row('sampledTps', t('sampledSpeedLabel'), t('speed', { throughput: `~${formatTokensPerSecond(sampledRate)}` }))}
       {active && row('timing', t('timeTimingLabel'), t('timeEstimateValue'))}
     </StatPill>}
     {usage !== undefined && total > 0 && <StatPill kind="usage" label={usageLabel} title={t('usageTitle')}
