@@ -13,18 +13,18 @@ export const inject = ['sessionProjections']
 export interface Config {
   refreshIntervalMs?: number
   /** Host 端查询 OpenRouter 单次统计；密钥从指定文件读取。 */
-  openRouter?: OpenRouterConfig
+  openRouter?: OpenRouterConfig | undefined
 }
 
 /** Runtime schema for {@link Config}. */
-export const Config = z.object({
+export const Config: z<Config> = z.object({
   refreshIntervalMs: z.natural().min(16).max(1000).default(250),
-  openRouter: z.object({
+  openRouter: z.union([z.const(undefined), z.object({
     apiKeyFile: z.string().required(),
     timeoutMs: z.natural().min(1).default(10000),
     maxAttempts: z.natural().min(1).max(5).default(3),
     retryDelayMs: z.natural().min(1).default(1000),
-  }),
+  })]),
 })
 
 /** Register the replayable live-token projection. */

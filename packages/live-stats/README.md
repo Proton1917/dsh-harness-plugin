@@ -2,7 +2,7 @@
 
 独立的 DeepSeek Harness 实时统计插件。Host 端统计 system、developer、user、assistant 与独立 tool-role 消息，通过 DSH `0.2.1-rc.3` session projection 的 `stateSchema` 与 Client `wire` 注册从已提交 stream 重建的用量和计时起点；Web Client 叠加 Session Controller 的 `assistant/live-chunk` 临时帧，显示轮次、步骤、LLM/工具耗时、TTFT、累计 token、缓存命中率和 TPS。OpenRouter 调用完成后，Host 根据原始 `gen-…` ID 查询 Generation API，以 `native_tokens_completion × 1000 / generation_time` 计算该次速度，并将原始计数、毫秒时长、调用位置和服务商保存为 Session 插件记录。界面优先显示最近一次 OpenRouter 统计，详情标明所属轮次、步骤及服务商；本地单次流式采样速度以 `~` 标记估算值。
 
-在 Profile 的 `live-stats` 条目中配置 Host 可读的密钥文件：
+默认配置启用本地流式统计。查询 OpenRouter 单次调用统计时，在 Profile 的 `live-stats` 条目中配置 Host 可读的密钥文件：
 
 ```yaml
 - id: live-stats
