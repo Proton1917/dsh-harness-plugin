@@ -21,7 +21,7 @@
     "url": "git+https://github.com/Proton1917/dsh-harness-plugin.git"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh": "0.2.1-rc.3",
+    "@deepseek-ai/dsh": "0.2.1-rc.4",
     "@modelcontextprotocol/sdk": "1.32.0"
   }
 }
