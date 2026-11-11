@@ -45,6 +45,7 @@ export function brandStyles(imageUrl: string): string {
   const card = `:is(button, span):has(> span > span ${name})`
   const cardRow = `div[data-window-drag]:has(> * > span > span ${name})`
   const rail = `button:has(${mark}):not(:has(${name}))`
+  const nativeToggle = '[data-slot="shell.leading"] [data-sidebar-opener]'
   return `
 ${card} {
   position: relative;
@@ -172,7 +173,34 @@ ${rail} {
   overflow: hidden;
 }
 
-${rail} ${mark} {
+${nativeToggle} {
+  position: relative;
+  width: 36px;
+  height: 36px;
+}
+
+${nativeToggle}::before {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+
+${nativeToggle} > svg {
+  opacity: 0;
+}
+
+${nativeToggle}:hover::before,
+${nativeToggle}:focus-visible::before {
+  opacity: 0;
+}
+
+${nativeToggle}:hover > svg,
+${nativeToggle}:focus-visible > svg {
+  opacity: 1;
+}
+
+${rail} ${mark},
+${nativeToggle}::before {
   width: 26px !important;
   height: 34px !important;
   box-sizing: border-box;
@@ -183,7 +211,7 @@ ${rail} ${mark} {
     url("${imageUrl}");
   background-position: center, center;
   background-repeat: no-repeat;
-  background-size: cover, cover;
+  background-size: cover, contain;
   box-shadow:
     0 0 0 1px rgba(113, 145, 229, 0.10),
     0 3px 9px rgba(15, 30, 75, 0.34),
@@ -192,7 +220,8 @@ ${rail} ${mark} {
 
 @media (prefers-contrast: more) {
   ${card},
-  ${rail} ${mark} {
+  ${rail} ${mark},
+  ${nativeToggle}::before {
     border-width: 2px;
   }
 }
