@@ -1,9 +1,9 @@
-import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import {
   IconDatabaseOutlineRegular, IconGaugeOutlineRegular,
-  useAnchoredPosition, useDismissOnOutsidePointer,
+  useDismissOnOutsidePointer,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { UseProjection } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
@@ -36,7 +36,7 @@ interface StatPillProps {
 function StatPill({ kind, label, title, icon, open, setOpen, children }: StatPillProps) {
   const anchor = useRef<HTMLSpanElement>(null)
   const panel = useRef<HTMLDivElement>(null)
-  const position = useAnchoredPosition({ open, anchorRef: anchor, panelRef: panel, side: 'top', gap: 8, margin: 12 })
+  const anchorName = `--dsh-live-stat-${useId().replace(/:/g, '')}`
   useDismissOnOutsidePointer(anchor, open, setOpen, panel)
   useEffect(() => {
     if (!open) return
@@ -45,7 +45,7 @@ function StatPill({ kind, label, title, icon, open, setOpen, children }: StatPil
     return () => { document.removeEventListener('keydown', close) }
   }, [open, setOpen])
   return <span className="dsh-live-stat-anchor">
-    <span ref={anchor}>
+    <span ref={anchor} style={{ anchorName }}>
       <button type="button" className="dsh-live-stat-pill" data-live-stat={kind}
         aria-label={title} aria-haspopup="dialog" aria-expanded={open} onClick={() => { setOpen(!open) }}>
         {icon}<span className="dsh-live-stat-label">{label}</span>
@@ -53,7 +53,7 @@ function StatPill({ kind, label, title, icon, open, setOpen, children }: StatPil
     </span>
     {open && createPortal(<div ref={panel} role="dialog" aria-label={title}
       className="dsh-live-stat-panel" data-live-stat-details={kind}
-      style={position ?? { visibility: 'hidden', left: 0, top: 0 }}>
+      style={{ positionAnchor: anchorName }}>
       <div className="dsh-live-stat-title">{icon}{title}</div>
       <dl className="dsh-live-stat-details">{children}</dl>
     </div>, document.body)}

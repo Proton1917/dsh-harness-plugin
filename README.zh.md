@@ -36,7 +36,7 @@ dsh --profile web --dump-config
 
 ### 启用医学 Agent Preset
 
-医学包附带受管 Preset 安装命令。在 DSH 0.2.2-rc.1 上，脚本生成本地声明 Bundle 并装入 Web Profile。安装医学包后运行：
+医学包附带受管 Preset 安装命令。在 DSH 0.2.2-rc.3 上，脚本生成本地声明 Bundle 并装入 Web Profile。安装医学包后运行：
 
 ```sh
 pnpm --dir "${DSH_HOME:-$HOME/.dsh}/profiles/web" exec dsh-medical-preset install
@@ -81,7 +81,7 @@ workspace 根目录不是 DSH Bundle，不能作为第五个包安装。
 
 ## 兼容性
 
-不可变的 `v0.1.0` 发布资产面向 DSH `0.1.1-rc.2` 构建并完成验证。当前 `main` 源码面向 DSH `0.2.2-rc.1`，开发依赖固定使用 npm 的精确版本。DSH `0.1.1-rc.2` 请使用 `v0.1.0` tarball；DSH `0.2.2-rc.1` 请使用当前源码。
+不可变的 `v0.1.0` 发布资产面向 DSH `0.1.1-rc.2` 构建并完成验证。当前 `main` 源码面向 DSH `0.2.2-rc.3`，开发依赖固定使用 npm 的精确版本。DSH `0.1.1-rc.2` 请使用 `v0.1.0` tarball；DSH `0.2.2-rc.3` 请使用当前源码。
 
 ## 开发
 
@@ -95,7 +95,7 @@ git diff --check
 
 `pnpm run ci` 运行各包的类型检查、单元测试和构建。`pnpm run pack:check` 检查每个 tarball 的实际文件。涉及界面的改动还需要在真实 Harness Web 中确认。
 
-依赖维护使用 `pnpm audit` 检查生产和开发依赖及全部严重等级。`pnpm-workspace.yaml` 中限定版本或父包的 override 为固定的 DSH 兼容依赖、HTTP 处理、URI 与 IP 解析、Zod、Hono、Vite、MCP Client 与 Server、图片解码和 LibreOffice 依赖选择安全补丁。MCP SDK 使用 `@hono/node-server 2.1.3`，修复 `GHSA-rmxm-3fg6-px4f` 的静态路径中间件绕过漏洞。qs override 选择 `6.16.1` 修复 `GHSA-6pq8-jhm2-2vcw`，覆盖 MCP SDK 的 Express 依赖。插件包要求 Vitest `^4.1.12`，Live Stats 精确固定 Zod `4.6.6`，与 DSH 共用 schema 类型。工作区显式安装 MCP SDK `1.32.0`，满足 Google GenAI 的可选 peer 依赖。这些 override 适用于本工作区；官方 Desktop Host 通过应用内置更新机制获取依赖更新。
+依赖维护使用 `pnpm audit` 检查生产和开发依赖及全部严重等级。`pnpm-workspace.yaml` 中限定版本或父包的 override 为固定的 DSH 兼容依赖、HTTP 处理、URI 与 IP 解析、Zod、Hono、Vite、MCP Client 与 Server、图片解码和 LibreOffice 依赖选择安全补丁。MCP SDK 使用 `@hono/node-server 2.1.6` 修复路径处理和 WebSocket 升级安全问题；Hono 使用 `4.13.16` 修复 mount、路由、CSS、CSRF 和表单校验问题。qs override 选择 `6.16.1` 修复 `GHSA-6pq8-jhm2-2vcw`，覆盖 MCP SDK 的 Express 依赖。插件包要求 Vitest `^4.1.12`，Live Stats 精确固定 Zod `4.6.6`，与 DSH 共用 schema 类型。工作区显式安装 MCP SDK `1.32.0`，满足 Google GenAI 的可选 peer 依赖。这些 override 适用于本工作区；官方 Desktop Host 通过应用内置更新机制获取依赖更新。
 
 ## 品牌与许可证
 

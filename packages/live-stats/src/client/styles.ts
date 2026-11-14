@@ -22,6 +22,10 @@ export const LIVE_STATS_STYLE = `
 .dsh-live-stat-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .dsh-live-stat-panel {
   position: fixed; z-index: 1100; box-sizing: border-box; width: max-content;
+  top: max(12px, var(--dsh-frame-overlay-top, 12px)); bottom: max(12px, calc(anchor(top) + 8px));
+  left: max(12px, anchor(left)); right: 12px; margin: 0; height: fit-content;
+  align-self: end; justify-self: start;
+  position-try-fallbacks: --dsh-live-stat-wide-above, --dsh-live-stat-below, --dsh-live-stat-window;
   min-width: min(300px, calc(100vw - 24px)); max-width: min(440px, calc(100vw - 24px));
   max-height: calc(100vh - 24px); overflow: auto; padding: 16px;
   border: 0; border-radius: var(--dsw-radius-lg); background: var(--dsw-specific-menu);
@@ -29,6 +33,17 @@ export const LIVE_STATS_STYLE = `
   --dsw-elevation-stroke-color: var(--dsw-alias-border-l1);
   box-shadow: var(--dsw-elevation-prominent); font-size: 12px; line-height: 18px;
   color: var(--dsw-alias-label-secondary);
+}
+@position-try --dsh-live-stat-wide-above {
+  left: 12px; right: 12px; justify-self: end;
+}
+@position-try --dsh-live-stat-below {
+  top: max(12px, calc(anchor(bottom) + 8px)); bottom: 12px;
+  left: 12px; right: 12px; align-self: start; justify-self: end;
+}
+@position-try --dsh-live-stat-window {
+  top: max(12px, var(--dsh-frame-overlay-top, 12px)); bottom: 12px;
+  left: 12px; right: 12px; align-self: start; justify-self: end;
 }
 .dsh-live-stat-title {
   display: flex; align-items: center; gap: 6px; margin-bottom: 10px; padding-bottom: 10px;

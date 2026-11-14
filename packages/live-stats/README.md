@@ -1,6 +1,6 @@
 # DSH Live Stats
 
-独立的 DeepSeek Harness 实时统计插件。Host 端统计 system、developer、user、assistant 与独立 tool-role 消息，通过 DSH `0.2.2-rc.1` session projection 的 `stateSchema` 与 Client `wire` 注册从已提交 stream 重建的用量和计时起点；Web Client 叠加 Session Controller 的 `assistant/live-chunk` 临时帧，显示轮次、步骤、LLM/工具耗时、TTFT、累计 token、缓存命中率和 TPS。OpenRouter 调用完成后，Host 根据原始 `gen-…` ID 查询 Generation API，以 `native_tokens_completion × 1000 / generation_time` 计算该次速度，并将原始计数、毫秒时长、调用位置和服务商保存为 Session 插件记录。界面优先显示最近一次 OpenRouter 统计，详情标明所属轮次、步骤及服务商；本地单次流式采样速度以 `~` 标记估算值。
+独立的 DeepSeek Harness 实时统计插件。Host 端统计 system、developer、user、assistant 与独立 tool-role 消息，通过 DSH `0.2.2-rc.3` session projection 的 `stateSchema` 与 Client `wire` 注册从已提交 stream 重建的用量和计时起点；Web Client 叠加 Session Controller 的 `assistant/live-chunk` 临时帧，显示轮次、步骤、LLM/工具耗时、TTFT、累计 token、缓存命中率和 TPS。OpenRouter 调用完成后，Host 根据原始 `gen-…` ID 查询 Generation API，以 `native_tokens_completion × 1000 / generation_time` 计算该次速度，并将原始计数、毫秒时长、调用位置和服务商保存为 Session 插件记录。界面优先显示最近一次 OpenRouter 统计，详情标明所属轮次、步骤及服务商；本地单次流式采样速度以 `~` 标记估算值。
 
 默认配置启用本地流式统计。查询 OpenRouter 单次调用统计时，在 Profile 的 `live-stats` 条目中配置 Host 可读的密钥文件：
 
@@ -17,6 +17,8 @@
 
 插件通过 `conversation.composer.dock` 的 `activity` 与 `usage` 条目管理这两个统计按钮；移除插件后恢复 Harness 自带统计项。
 
+统计详情使用 CSS anchor positioning 跟随对应按钮，并在窗口边缘调整位置，保留侧栏变化和窗口缩放时的可读范围。
+
 Profile 中的 `refreshIntervalMs` 控制正在进行的用时刷新间隔，默认 250 毫秒，允许 16–1000 毫秒。计时结束或组件卸载时释放刷新定时器。统计从完整会话日志重建，历史分页和压缩不改变累计数量。
 
 安装 `v0.1.0` 预构建包：
@@ -31,6 +33,6 @@ dsh plugin --profile web add https://github.com/Proton1917/dsh-harness-plugin/re
 dsh plugin --profile web add ./packages/live-stats
 ```
 
-当前源码面向 DSH `0.2.2-rc.1`。`v0.1.0` 发布 tarball 仍面向 DSH `0.1.1-rc.2`，安装时应使用对应的 DSH 版本。
+当前源码面向 DSH `0.2.2-rc.3`。`v0.1.0` 发布 tarball 仍面向 DSH `0.1.1-rc.2`，安装时应使用对应的 DSH 版本。
 
 Client 构建包含 UI primitives 的数学渲染依赖，KaTeX 使用 `0.18.2` 或更新的兼容版本；工作区 override 使 `micromark-extension-math` 使用同一修复版本。

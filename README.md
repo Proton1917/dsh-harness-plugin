@@ -36,7 +36,7 @@ dsh --profile web --dump-config
 
 ### Enable the Medical Agent Preset
 
-The medical package ships a managed preset installer. On DSH 0.2.2-rc.1 it generates a local declaration bundle and selects it in the Web Profile. Install the package first, then run:
+The medical package ships a managed preset installer. On DSH 0.2.2-rc.3 it generates a local declaration bundle and selects it in the Web Profile. Install the package first, then run:
 
 ```sh
 pnpm --dir "${DSH_HOME:-$HOME/.dsh}/profiles/web" exec dsh-medical-preset install
@@ -81,7 +81,7 @@ The output supports medical education, research, and clinician-reviewed decision
 
 ## Compatibility
 
-The immutable `v0.1.0` release assets were built and verified for DSH `0.1.1-rc.2`. The current `main` source checkout targets DSH `0.2.2-rc.1`, with exact development dependencies from npm. Install the `v0.1.0` tarballs with DSH `0.1.1-rc.2`; use the current source checkout with DSH `0.2.2-rc.1`.
+The immutable `v0.1.0` release assets were built and verified for DSH `0.1.1-rc.2`. The current `main` source checkout targets DSH `0.2.2-rc.3`, with exact development dependencies from npm. Install the `v0.1.0` tarballs with DSH `0.1.1-rc.2`; use the current source checkout with DSH `0.2.2-rc.3`.
 
 ## Development
 
@@ -95,7 +95,7 @@ git diff --check
 
 `pnpm run ci` runs package type checks, unit tests, and builds. `pnpm run pack:check` inspects the files shipped by every tarball. User-visible changes also require validation in the real Harness Web application.
 
-Dependency maintenance includes `pnpm audit` across production and development dependencies and all severity levels. The scoped overrides in `pnpm-workspace.yaml` select security patches for the pinned DSH assembly, HTTP handling, URI and IP parsing, Zod, Hono, Vite, MCP clients and servers, image decoding, and LibreOffice dependency. MCP SDK uses `@hono/node-server 2.1.3` to fix the static-path middleware bypass in `GHSA-rmxm-3fg6-px4f`. The qs override selects `6.16.1` for `GHSA-6pq8-jhm2-2vcw`, including Express dependencies of MCP SDK. The plugin packages require Vitest `^4.1.12`; Live Stats pins Zod `4.6.6` to share DSH's schema types. The workspace explicitly installs MCP SDK `1.32.0` to provide Google GenAI's optional peer. These overrides apply to this workspace; the official Desktop Host receives its dependencies through the application's built-in updater.
+Dependency maintenance includes `pnpm audit` across production and development dependencies and all severity levels. The scoped overrides in `pnpm-workspace.yaml` select security patches for the pinned DSH assembly, HTTP handling, URI and IP parsing, Zod, Hono, Vite, MCP clients and servers, image decoding, and LibreOffice dependency. MCP SDK uses `@hono/node-server 2.1.6` for the path handling and WebSocket upgrade security fixes; Hono uses `4.13.16` for its mount, router, CSS, CSRF, and form-validation fixes. The qs override selects `6.16.1` for `GHSA-6pq8-jhm2-2vcw`, including Express dependencies of MCP SDK. The plugin packages require Vitest `^4.1.12`; Live Stats pins Zod `4.6.6` to share DSH's schema types. The workspace explicitly installs MCP SDK `1.32.0` to provide Google GenAI's optional peer. These overrides apply to this workspace; the official Desktop Host receives its dependencies through the application's built-in updater.
 
 ## Brand and licenses
 
