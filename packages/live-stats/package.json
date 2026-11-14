@@ -74,6 +74,7 @@
     "react-dom": "^18.2.0"
   },
   "dependencies": {
+    "@floating-ui/react-dom": "2.1.9",
     "@huggingface/tokenizers": "0.1.3",
     "@deepseek-ai/schemastery": "3.19.0",
     "zod": "4.6.6"
