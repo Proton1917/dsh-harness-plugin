@@ -1,6 +1,9 @@
 import { expandAssistantStream } from '@deepseek-ai/dsh-llm/assistant-stream'
 import { z } from 'zod'
-import type { ContentBlock, Message, StreamChunk, TokenUsage } from '@deepseek-ai/dsh-llm'
+import { pluginRecordOf } from '@deepseek-ai/dsh-session'
+import { openRouterStatisticsSchema } from './openrouter-statistics.ts'
+import type { OpenRouterStatistics } from './openrouter-statistics.ts'
+import type { ContentBlock, Message, TokenUsage } from '@deepseek-ai/dsh-llm'
 import type { EpochHeader, SessionEvent, SurfaceEvent } from '@deepseek-ai/dsh-session'
 import type { ProjectionDefinition } from '@deepseek-ai/dsh-session-projection'
 import type { TokenUsageProjection } from '@deepseek-ai/dsh-token-meter/client'
@@ -8,13 +11,9 @@ import type { TokenCounter } from './token-counter.ts'
 import type { LiveTokenUsageProjection } from './types.ts'
 import { applyStatistics, initialStatistics, statisticsSchema } from './statistics.ts'
 import type { StatisticsState } from './statistics.ts'
-
-const zeroBuckets = (): TokenUsageProjection => ({
-  uncachedInputTokens: 0,
-  outputTokens: 0,
-  cacheReadTokens: 0,
-  cacheWriteTokens: 0,
-})
+import { applyChunk, exactStep, rateOf, zeroBuckets } from './stream-sampling.ts'
+import type { ActiveStep } from './stream-sampling.ts'
+export { sampleLiveChunks } from './stream-sampling.ts'
 
 const bucketsFrom = (usage: TokenUsage): TokenUsageProjection => ({
   uncachedInputTokens: usage.inputTokens,
@@ -45,28 +44,12 @@ const projectionSchema = z.object({
   activeStepEstimated: z.boolean().optional(),
   statistics: statisticsSchema.optional(),
   tokensPerSecond: z.number().nonnegative().optional(),
+  openRouter: openRouterStatisticsSchema.optional(),
 }).strict() as unknown as z.ZodType<LiveTokenUsageProjection>
 
 interface SurfaceNode {
   seq: number
   tokens: number
-}
-
-type OutputBlock =
-  | { type: 'text'; text: string }
-  | { type: 'reasoning'; text: string }
-  | { type: 'tool-call'; id: Extract<ContentBlock, { type: 'tool-call' }>['id']; name: string; arguments: string }
-  | { type: 'fixed'; block: ContentBlock }
-
-interface ActiveStep {
-  turn: number
-  step: number
-  buckets: TokenUsageProjection
-  exact: boolean
-  blocks: Array<OutputBlock | null>
-  firstOutputTime?: number
-  firstOutputTokens?: number
-  latestOutputTime?: number
 }
 
 interface SettledSample {
@@ -78,6 +61,7 @@ interface SettledSample {
 }
 
 interface State {
+  openRouter?: OpenRouterStatistics
   settled: TokenUsageProjection
   settledEstimates: number
   last: SettledSample | null
@@ -138,6 +122,7 @@ const settledSampleSchema = z.object({
 }).strict()
 
 const stateSchema = z.object({
+  openRouter: openRouterStatisticsSchema.optional(),
   settled: tokenBucketsSchema,
   settledEstimates: z.number().int().nonnegative(),
   last: settledSampleSchema.nullable(),
@@ -198,108 +183,6 @@ function applySurface(
   }
 }
 
-function applyOutputChunk(
-  blocks: Array<OutputBlock | null>,
-  chunk: StreamChunk,
-): Array<OutputBlock | null> {
-  if (chunk.type === 'usage' || chunk.type === 'finish') return blocks
-  const next = [...blocks]
-  while (next.length <= chunk.index) next.push(null)
-  switch (chunk.type) {
-    case 'text-delta': {
-      if (chunk.text === '') return blocks
-      const previous = next[chunk.index]
-      next[chunk.index] = {
-        type: 'text',
-        text: (previous?.type === 'text' ? previous.text : '') + chunk.text,
-      }
-      return next
-    }
-    case 'reasoning-delta': {
-      if (chunk.text === '') return blocks
-      const previous = next[chunk.index]
-      next[chunk.index] = {
-        type: 'reasoning',
-        text: (previous?.type === 'reasoning' ? previous.text : '') + chunk.text,
-      }
-      return next
-    }
-    case 'tool-call-delta': {
-      if (chunk.name === undefined && chunk.argumentsDelta === '') return blocks
-      const previous = next[chunk.index]
-      next[chunk.index] = {
-        type: 'tool-call',
-        id: chunk.id,
-        name: chunk.name ?? (previous?.type === 'tool-call' ? previous.name : ''),
-        arguments: (previous?.type === 'tool-call' ? previous.arguments : '') + chunk.argumentsDelta,
-      }
-      return next
-    }
-    case 'block-end':
-      next[chunk.index] = { type: 'fixed', block: chunk.block }
-      return next
-    default:
-      return blocks
-  }
-}
-
-function outputTokens(blocks: readonly (OutputBlock | null)[], counter: TokenCounter): number {
-  const content: ContentBlock[] = []
-  for (const block of blocks) {
-    if (block === null) continue
-    content.push(block.type === 'fixed' ? block.block : block)
-  }
-  return counter.countAssistantOutput(content)
-}
-
-function outputDeltaTokens(chunk: StreamChunk, counter: TokenCounter): number {
-  switch (chunk.type) {
-    case 'text-delta':
-    case 'reasoning-delta':
-      return counter.countText(chunk.text)
-    case 'tool-call-delta':
-      return counter.countText(chunk.name ?? '') + counter.countText(chunk.argumentsDelta)
-    default:
-      return 0
-  }
-}
-
-function rateOf(step: ActiveStep): number | undefined {
-  if (step.firstOutputTime === undefined || step.latestOutputTime === undefined) return
-  if (step.firstOutputTokens === undefined) return
-  const elapsedMs = step.latestOutputTime - step.firstOutputTime
-  const generatedTokens = step.buckets.outputTokens - step.firstOutputTokens
-  if (elapsedMs <= 0 || generatedTokens <= 0) return
-  return generatedTokens * 1_000 / elapsedMs
-}
-
-function exactStep(step: ActiveStep, usage: TokenUsage): ActiveStep {
-  return {
-    ...step,
-    buckets: bucketsFrom(usage),
-    exact: true,
-  }
-}
-
-function applyChunk(active: ActiveStep, chunk: StreamChunk, time: number, counter: TokenCounter): ActiveStep {
-  if (chunk.type === 'usage') return exactStep(active, chunk.usage)
-  const blocks = applyOutputChunk(active.blocks, chunk)
-  if (blocks === active.blocks) return active
-  const added = outputDeltaTokens(chunk, counter)
-  const tokens = active.exact ? active.buckets.outputTokens : chunk.type === 'block-end' ? outputTokens(blocks, counter) : active.buckets.outputTokens + added
-  return {
-    ...active, blocks, buckets: { ...active.buckets, outputTokens: tokens },
-    ...(added > 0 ? { firstOutputTime: active.firstOutputTime ?? time, firstOutputTokens: active.firstOutputTokens ?? tokens, latestOutputTime: time } : {}),
-  }
-}
-
-/** Fold one transient attempt using provider timestamps and the same tokenizer as replay. */
-export function sampleLiveChunks(chunks: readonly { chunk: StreamChunk; time: number }[], counter: TokenCounter) {
-  let active: ActiveStep = { turn: 0, step: 0, buckets: zeroBuckets(), blocks: [], exact: false }
-  for (const member of chunks) active = applyChunk(active, member.chunk, member.time, counter)
-  return { buckets: active.buckets, exact: active.exact, tokensPerSecond: rateOf(active), firstOutputTime: active.firstOutputTime }
-}
-
 function view(state: State): LiveTokenUsageProjection {
   const active = state.active
   const previous = active !== null
@@ -316,6 +199,7 @@ function view(state: State): LiveTokenUsageProjection {
   const rate = active === null ? state.last?.tokensPerSecond : rateOf(active)
   return {
     ...buckets,
+    ...(state.openRouter === undefined ? {} : { openRouter: state.openRouter }),
     estimated: estimates > 0,
     settledEstimated: state.settledEstimates - (previous?.estimated === true ? 1 : 0) > 0,
     ...(active === null ? {} : { activeStepEstimated: !active.exact }),
@@ -348,6 +232,12 @@ export function createLiveTokenUsageProjectionDefinition(
       statistics: initialStatistics(),
     }),
     apply: (state, event: SessionEvent) => {
+      const record = pluginRecordOf(event)
+      if (record?.type === 'plugin:proton1917/live-stats/openrouter') {
+        const statistics = openRouterStatisticsSchema.parse(record.data)
+        return state.openRouter === undefined || statistics.sourceSeq > state.openRouter.sourceSeq
+          ? { ...state, openRouter: statistics } : state
+      }
       const statistics = applyStatistics(state.statistics, event)
       let next = statistics === state.statistics ? state : { ...state, statistics }
       if (event.type === 'step/start') {
