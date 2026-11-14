@@ -1,6 +1,7 @@
-import { Fragment, useCallback, useEffect, useId, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom'
 import {
   IconDatabaseOutlineRegular, IconGaugeOutlineRegular,
   useDismissOnOutsidePointer,
@@ -34,10 +35,14 @@ interface StatPillProps {
 }
 
 function StatPill({ kind, label, title, icon, open, setOpen, children }: StatPillProps) {
-  const anchor = useRef<HTMLSpanElement>(null)
-  const panel = useRef<HTMLDivElement>(null)
-  const anchorName = `--dsh-live-stat-${useId().replace(/:/g, '')}`
-  useDismissOnOutsidePointer(anchor, open, setOpen, panel)
+  const { refs, floatingStyles } = useFloating<HTMLSpanElement>({
+    open,
+    strategy: 'fixed',
+    placement: 'top-start',
+    middleware: [offset(8), flip({ padding: 12 }), shift({ padding: 12 })],
+    whileElementsMounted: autoUpdate,
+  })
+  useDismissOnOutsidePointer(refs.reference, open, setOpen, refs.floating)
   useEffect(() => {
     if (!open) return
     const close = (event: KeyboardEvent): void => { if (event.key === 'Escape') setOpen(false) }
@@ -45,15 +50,15 @@ function StatPill({ kind, label, title, icon, open, setOpen, children }: StatPil
     return () => { document.removeEventListener('keydown', close) }
   }, [open, setOpen])
   return <span className="dsh-live-stat-anchor">
-    <span ref={anchor} style={{ anchorName }}>
+    <span ref={refs.setReference}>
       <button type="button" className="dsh-live-stat-pill" data-live-stat={kind}
         aria-label={title} aria-haspopup="dialog" aria-expanded={open} onClick={() => { setOpen(!open) }}>
         {icon}<span className="dsh-live-stat-label">{label}</span>
       </button>
     </span>
-    {open && createPortal(<div ref={panel} role="dialog" aria-label={title}
+    {open && createPortal(<div ref={refs.setFloating} role="dialog" aria-label={title}
       className="dsh-live-stat-panel" data-live-stat-details={kind}
-      style={{ positionAnchor: anchorName }}>
+      style={floatingStyles}>
       <div className="dsh-live-stat-title">{icon}{title}</div>
       <dl className="dsh-live-stat-details">{children}</dl>
     </div>, document.body)}

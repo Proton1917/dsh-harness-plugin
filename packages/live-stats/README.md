@@ -6,7 +6,7 @@
 
 插件通过 `conversation.composer.dock` 的 `activity` 与 `usage` 条目管理这两个统计按钮；移除插件后恢复 Harness 自带统计项。
 
-统计详情使用 CSS anchor positioning 跟随对应按钮，并在窗口边缘调整位置，保留侧栏变化和窗口缩放时的可读范围。
+统计详情使用 Floating UI 跟随对应按钮，在内容变化、侧栏调整和窗口缩放时重新计算位置，并在窗口边缘翻转或平移。
 
 Profile 中的 `refreshIntervalMs` 控制正在进行的用时刷新间隔，默认 250 毫秒，允许 16–1000 毫秒。计时结束或组件卸载时释放刷新定时器。统计从完整会话日志重建，历史分页和压缩不改变累计数量。
 
