@@ -1,4 +1,5 @@
 import type { TokenUsageProjection } from '@deepseek-ai/dsh-token-meter/client'
+import type { OpenRouterStatistics } from './openrouter-statistics.ts'
 
 /** 当前会话的累计计数、已记录用时和正在进行的计时。 */
 export interface LiveSessionStatistics {
@@ -26,6 +27,8 @@ export interface LiveTokenUsageProjection extends TokenUsageProjection {
   activeStepUsage?: TokenUsageProjection
   /** Output throughput for the active or latest response when an interval exists. */
   tokensPerSecond?: number
+  /** 最近一次收到的 OpenRouter 单次调用统计。 */
+  openRouter?: OpenRouterStatistics
 }
 
 declare module '@deepseek-ai/dsh-session-projection/types' {

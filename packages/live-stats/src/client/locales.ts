@@ -6,7 +6,8 @@ export const LIVE_STATS_NS = 'liveStats'
 /** 按钮和详情的本地化文本标识。 */
 export type LiveStatsLocaleKey =
   | 'counts' | 'speed' | 'totalCompact' | 'cacheHit' | 'timeTitle' | 'usageTitle'
-  | 'turnsLabel' | 'stepsLabel' | 'llmLabel' | 'toolLabel' | 'ttftLabel' | 'speedLabel'
+  | 'turnsLabel' | 'stepsLabel' | 'llmLabel' | 'toolLabel' | 'ttftLabel'
+  | 'sampledSpeedLabel' | 'openRouterSpeedLabel' | 'speedStepLabel' | 'speedProviderLabel'
   | 'totalLabel' | 'inputLabel' | 'uncachedLabel' | 'cacheReadLabel' | 'cacheWriteLabel'
   | 'outputLabel' | 'cacheLabel' | 'estimateLabel' | 'estimateValue' | 'timeEstimateValue' | 'timeTimingLabel'
 
@@ -22,7 +23,8 @@ export const zh: Record<LiveStatsLocaleKey, string> = {
   counts: '{turns} 轮 {steps} 步', speed: '{throughput} tok/s', totalCompact: '{total} tok',
   cacheHit: '缓存命中 {percent}%', timeTitle: '会话统计', usageTitle: 'Token 用量',
   turnsLabel: '轮次', stepsLabel: '步骤', llmLabel: '模型用时', toolLabel: '工具调用用时',
-  ttftLabel: '首 token 平均（TTFT）', speedLabel: '输出速度（TPS）', totalLabel: '累计用量',
+  ttftLabel: '首 token 平均（TTFT）', sampledSpeedLabel: '单次采样速度（TPS）',
+  openRouterSpeedLabel: '最近调用速度（OpenRouter）', speedStepLabel: '统计所属调用', speedProviderLabel: '调用服务商', totalLabel: '累计用量',
   inputLabel: '输入总量', uncachedLabel: '未缓存输入', cacheReadLabel: '缓存读取',
   cacheWriteLabel: '缓存写入', outputLabel: '输出', cacheLabel: '已报告缓存命中',
   estimateLabel: '实时用量', estimateValue: '~ 表示估算值；输入与缓存随请求和提供方报告更新',
@@ -35,7 +37,8 @@ export const en: Record<LiveStatsLocaleKey, string> = {
   counts: '{turns} turns {steps} steps', speed: '{throughput} tok/s', totalCompact: '{total} tok',
   cacheHit: 'Cache hit {percent}%', timeTitle: 'Session statistics', usageTitle: 'Token usage',
   turnsLabel: 'Turns', stepsLabel: 'Steps', llmLabel: 'LLM time', toolLabel: 'Tool time',
-  ttftLabel: 'Average TTFT', speedLabel: 'Output speed (TPS)', totalLabel: 'Total tokens',
+  ttftLabel: 'Average TTFT', sampledSpeedLabel: 'Per-call sampled speed (TPS)',
+  openRouterSpeedLabel: 'Latest call speed (OpenRouter)', speedStepLabel: 'Measured call', speedProviderLabel: 'Serving provider', totalLabel: 'Total tokens',
   inputLabel: 'Total input', uncachedLabel: 'Uncached input', cacheReadLabel: 'Cache read',
   cacheWriteLabel: 'Cache write', outputLabel: 'Output', cacheLabel: 'Reported cache hit',
   estimateLabel: 'Live usage', estimateValue: '~ marks estimates; input and cache update with requests and provider reports',

@@ -3,7 +3,7 @@ import type { SessionEventSource, SessionEventWindow } from '@deepseek-ai/dsh-ap
 import tokenizerData from '../../assets/deepseek-v3/tokenizer.json' with { type: 'json' }
 import tokenizerConfig from '../../assets/deepseek-v3/tokenizer_config.json' with { type: 'json' }
 import { createTokenCounter, type TokenCounter } from '../token-counter.ts'
-import { sampleLiveChunks } from '../projection.ts'
+import { sampleLiveChunks } from '../stream-sampling.ts'
 import type { LiveTokenUsageProjection } from '../types.ts'
 
 let counter: TokenCounter | undefined
